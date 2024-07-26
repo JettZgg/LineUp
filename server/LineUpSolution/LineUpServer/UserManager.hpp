@@ -14,9 +14,9 @@ public:
     int rank;
     std::string getDanRank() const;
     void updateRank(int opponent_rank, bool win);
+    static std::string hashPassword(const std::string& password);
 
 private:
-    std::string hashPassword(const std::string& password) const;
 };
 
 class UserManager {

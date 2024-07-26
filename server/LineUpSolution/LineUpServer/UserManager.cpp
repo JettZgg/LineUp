@@ -6,7 +6,7 @@
 #include <sstream>
 
 User::User(const std::string& email, const std::string& username, const std::string& password)
-    : email(email), username(username), password_hash(hashPassword(password)), rank(1000) {}
+    : email(email), username(username), password_hash(User::hashPassword(password)), rank(1000) {}
 
 std::string User::getDanRank() const {
     if (rank < 1000) return "Rookie";
@@ -22,7 +22,7 @@ void User::updateRank(int opponent_rank, bool win) {
     rank = std::max(0, rank); // Ensure rank doesn't go below 0
 }
 
-std::string User::hashPassword(const std::string& password) const {
+std::string User::hashPassword(const std::string& password) {
     unsigned char hash[SHA256_DIGEST_LENGTH];
     SHA256_CTX sha256;
     SHA256_Init(&sha256);
@@ -48,7 +48,7 @@ bool UserManager::loginUser(const std::string& email, const std::string& passwor
     if (it == users.end()) {
         return false; // User not found
     }
-    return it->second.password_hash == it->second.hashPassword(password);
+    return it->second.password_hash == User::hashPassword(password);
 }
 
 User* UserManager::getUser(const std::string& email) {

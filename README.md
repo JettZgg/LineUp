@@ -27,8 +27,8 @@ A custom Gomoku
     -   Allow users to view performance metrics and game statistics.
 
 ## Game Rules
-1.  To win, a player must align a specified number of pieces in a row, which can be between 3 and 19.
-2.  The board's width and height can range from 3 to 99.
-3.  The dimensions of the board (width and height) must be at least as large as the number of pieces needed in a row to win.
-4.  The player who first achieves the required number of consecutive pieces wins the game.
-5.  If the board is completely filled and no player has won, the game ends in a tie.
+-   **Winning Condition**: Align a specified number of pieces in a row (between 3 and 19) to win.
+-   **Board Size**: The board's width and height can range from 3 to 99.
+-   **Minimum Board Size**: The board dimensions must be at least as large as the number of pieces needed to win.
+-   **First to Win**: The first player to align the required number of consecutive pieces wins.
+-   **Tie Condition**: If the board is filled and no player has won, the game ends in a tie.

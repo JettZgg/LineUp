@@ -55,17 +55,30 @@ std::string Config::getString(const std::string& key, const std::string& default
 }
 
 std::string findConfigFile() {
-    std::filesystem::path currentPath = std::filesystem::current_path();
-    std::filesystem::path configPath = currentPath / "config.json";
+    namespace fs = std::filesystem;
+    fs::path currentPath = fs::current_path();
+    std::cout << "Current Path: " << currentPath << std::endl;
 
-    if (!std::filesystem::exists(configPath)) {
+    fs::path configPath = currentPath / "config.json";
+    std::cout << "Checking Path: " << configPath << std::endl;
+
+    if (!fs::exists(configPath)) {
         configPath = currentPath.parent_path() / "config.json";
+        std::cout << "Checking Parent Path: " << configPath << std::endl;
+
+        if (!fs::exists(configPath)) {
+            // Check LineUpServer directory
+            configPath = currentPath.parent_path().parent_path().parent_path() / "config.json";
+            std::cout << "Checking LineUpServer Directory: " << configPath << std::endl;
+        }
     }
 
-    if (std::filesystem::exists(configPath)) {
+    if (fs::exists(configPath)) {
+        std::cout << "Config file found at: " << configPath << std::endl;
         return configPath.string();
     }
     else {
+        std::cerr << "Config file not found" << std::endl;
         throw std::runtime_error("Config file not found");
     }
 }

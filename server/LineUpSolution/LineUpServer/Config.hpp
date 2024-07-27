@@ -1,17 +1,18 @@
-#pragma once
+#ifndef CONFIG_HPP
+#define CONFIG_HPP
 
-#include <boost/json.hpp>
 #include <string>
-#include <fstream>
-#include <iostream>
-#include <cstdint>
+#include <boost/json.hpp>
 
 class Config {
 public:
+    static boost::json::object config;
+
     static void load(const std::string& filename);
     static uint32_t getUInt32(const std::string& key, uint32_t defaultValue);
     static std::string getString(const std::string& key, const std::string& defaultValue);
-
-private:
-    static boost::json::object config;
 };
+
+std::string findConfigFile();
+
+#endif // CONFIG_HPP

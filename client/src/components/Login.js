@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { sendMessage } from '../WebSocket';
 
 function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const history = useHistory();
+    const navigate = useNavigate();
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -25,7 +25,7 @@ function Login() {
                 if (data.success) {
                     localStorage.setItem('sessionId', data.session_id);
                     localStorage.setItem('username', data.username);
-                    history.push('/lobby');
+                    navigate('/lobby');
                 } else {
                     setError('Login failed. Please check your credentials and try again.');
                 }
@@ -39,7 +39,7 @@ function Login() {
             socket.removeEventListener('message', handleMessage);
             socket.close();
         };
-    }, [history]);
+    }, [navigate]);
 
     return (
         <div>
@@ -66,6 +66,7 @@ function Login() {
                 </div>
                 <button type="submit">Login</button>
             </form>
+            <p>Don't have an account? <Link to="/register">Register</Link></p>
         </div>
     );
 }

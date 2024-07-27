@@ -14,7 +14,6 @@
 #include "Config.hpp"
 #include <cstdint>
 
-
 namespace beast = boost::beast;
 namespace websocket = beast::websocket;
 namespace net = boost::asio;
@@ -24,16 +23,14 @@ using tcp = net::ip::tcp;
 UserManager user_manager;
 GameManager game_manager(user_manager);
 
-void send_error(websocket::stream<tcp::socket>& ws, const std::string& error_message)
-{
+void send_error(websocket::stream<tcp::socket>& ws, const std::string& error_message) {
     json::object response;
     response["action"] = "error";
     response["message"] = error_message;
     ws.write(net::buffer(json::serialize(response)));
 }
 
-void handle_message(websocket::stream<tcp::socket>& ws, const std::string& message)
-{
+void handle_message(websocket::stream<tcp::socket>& ws, const std::string& message) {
     try {
         json::value jv = json::parse(message);
         std::string action = jv.at("action").as_string().c_str();
@@ -180,36 +177,30 @@ void handle_message(websocket::stream<tcp::socket>& ws, const std::string& messa
     }
 }
 
-void handle_session(websocket::stream<tcp::socket>& ws)
-{
-    try
-    {
+void handle_session(websocket::stream<tcp::socket>& ws) {
+    try {
         ws.accept();
 
-        for (;;)
-        {
+        for (;;) {
             beast::flat_buffer buffer;
             ws.read(buffer);
             std::string message = beast::buffers_to_string(buffer.data());
             handle_message(ws, message);
         }
     }
-    catch (beast::system_error const& se)
-    {
+    catch (beast::system_error const& se) {
         if (se.code() != websocket::error::closed)
             std::cerr << "Error: " << se.code().message() << std::endl;
     }
-    catch (std::exception const& e)
-    {
+    catch (std::exception const& e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }
 }
 
-int main(int argc, char* argv[])
-{
-    try
-    {
-        Config::load("config.json");
+int main(int argc, char* argv[]) {
+    try {
+        std::string configFilePath = findConfigFile();
+        Config::load(configFilePath);
 
         auto const address = net::ip::make_address(Config::getString("server_address", "0.0.0.0"));
         auto const port = static_cast<unsigned short>(Config::getUInt32("server_port", 8080));
@@ -220,8 +211,7 @@ int main(int argc, char* argv[])
 
         std::cout << "Server listening on " << address << ":" << static_cast<unsigned int>(port) << std::endl;
 
-        for (;;)
-        {
+        for (;;) {
             tcp::socket socket{ ioc };
             acceptor.accept(socket);
             std::thread{ std::bind(
@@ -230,8 +220,7 @@ int main(int argc, char* argv[])
             ) }.detach();
         }
     }
-    catch (const std::exception& e)
-    {
+    catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return EXIT_FAILURE;
     }

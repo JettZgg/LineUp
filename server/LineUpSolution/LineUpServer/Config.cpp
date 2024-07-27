@@ -1,5 +1,10 @@
 #include "Config.hpp"
 #include <limits>
+#include <iostream>
+#include <fstream>
+#include <stdexcept>
+#include <filesystem> // Ensure this is included correctly
+#include <boost/json.hpp>
 
 boost::json::object Config::config;
 
@@ -7,7 +12,7 @@ void Config::load(const std::string& filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
         std::cerr << "Failed to open config file: " << filename << std::endl;
-        return;
+        throw std::runtime_error("Config file not found");
     }
 
     std::string content((std::istreambuf_iterator<char>(file)),
@@ -47,4 +52,20 @@ std::string Config::getString(const std::string& key, const std::string& default
         return it->value().as_string().c_str();
     }
     return defaultValue;
+}
+
+std::string findConfigFile() {
+    std::filesystem::path currentPath = std::filesystem::current_path();
+    std::filesystem::path configPath = currentPath / "config.json";
+
+    if (!std::filesystem::exists(configPath)) {
+        configPath = currentPath.parent_path() / "config.json";
+    }
+
+    if (std::filesystem::exists(configPath)) {
+        return configPath.string();
+    }
+    else {
+        throw std::runtime_error("Config file not found");
+    }
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Register from './components/Register';
 import Login from './components/Login';
 import GameLobby from './components/GameLobby';
@@ -9,13 +9,13 @@ function App() {
   return (
     <Router>
       <div className="App">
-        <Switch>
-          <Route path="/register" component={Register} />
-          <Route path="/login" component={Login} />
-          <Route path="/lobby" component={GameLobby} />
-          <Route path="/game/:id" component={Game} />
-          <Route path="/" exact component={Login} />
-        </Switch>
+        <Routes>
+          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/lobby" element={<GameLobby />} />
+          <Route path="/game/:id" element={<Game />} />
+          <Route path="/" element={<Login />} />
+        </Routes>
       </div>
     </Router>
   );

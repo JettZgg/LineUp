@@ -1,0 +1,10 @@
+{
+  "min_board_width": 3,
+  "max_board_width": 99,
+  "min_board_height": 3,
+  "max_board_height": 99,
+  "min_win_condition": 3,
+  "max_win_condition": 19,
+  "server_address": "0.0.0.0",
+  "server_port": 8080
+}

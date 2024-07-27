@@ -8,7 +8,7 @@ public:
     Session(const std::string& userEmail);
     bool isExpired() const;
     void refresh();
-    const std::string& getUserEmail() const { return userEmail; }
+    const std::string& getUserEmail() const;
 
 private:
     std::string userEmail;

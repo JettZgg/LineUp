@@ -1,31 +1,45 @@
 #include "UserManager.hpp"
-#include <cmath>
-#include <random>
-#include <algorithm>
+#include "Session.hpp"
 #include <openssl/sha.h>
 #include <openssl/rand.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/buffer.h>
+#include <cmath>
+#include <random>
+#include <algorithm>
 #include <iomanip>
 #include <sstream>
 #include <cstring>
+#include <cstdint>
 
 User::User(const std::string& email, const std::string& username, const std::string& password)
     : email(email), username(username), password_hash(hashPassword(password)), rank(1000) {}
 
+std::vector<unsigned char> User::generateSalt() {
+    std::vector<unsigned char> salt(16);
+    RAND_bytes(salt.data(), salt.size());
+    return salt;
+}
+
 std::string User::hashPassword(const std::string& password) {
     std::vector<unsigned char> salt = generateSalt();
-    std::vector<unsigned char> hash(SHA256_DIGEST_LENGTH);
+    std::vector<unsigned char> hash(EVP_MAX_MD_SIZE);
+    unsigned int hashLen;
 
     std::vector<unsigned char> passwordData(password.begin(), password.end());
     std::vector<unsigned char> saltedPassword = salt;
     saltedPassword.insert(saltedPassword.end(), passwordData.begin(), passwordData.end());
 
-    SHA256_CTX sha256;
-    SHA256_Init(&sha256);
-    SHA256_Update(&sha256, saltedPassword.data(), saltedPassword.size());
-    SHA256_Final(hash.data(), &sha256);
+    EVP_MD_CTX* mdctx = EVP_MD_CTX_new();
+    const EVP_MD* md = EVP_sha256();
+
+    EVP_DigestInit_ex(mdctx, md, nullptr);
+    EVP_DigestUpdate(mdctx, saltedPassword.data(), saltedPassword.size());
+    EVP_DigestFinal_ex(mdctx, hash.data(), &hashLen);
+    EVP_MD_CTX_free(mdctx);
+
+    hash.resize(hashLen);
 
     std::string saltBase64 = base64Encode(salt);
     std::string hashBase64 = base64Encode(hash);
@@ -49,11 +63,18 @@ bool User::verifyPassword(const std::string& password, const std::string& stored
     std::vector<unsigned char> saltedPassword = salt;
     saltedPassword.insert(saltedPassword.end(), passwordData.begin(), passwordData.end());
 
-    std::vector<unsigned char> computedHash(SHA256_DIGEST_LENGTH);
-    SHA256_CTX sha256;
-    SHA256_Init(&sha256);
-    SHA256_Update(&sha256, saltedPassword.data(), saltedPassword.size());
-    SHA256_Final(computedHash.data(), &sha256);
+    std::vector<unsigned char> computedHash(EVP_MAX_MD_SIZE);
+    unsigned int hashLen;
+
+    EVP_MD_CTX* mdctx = EVP_MD_CTX_new();
+    const EVP_MD* md = EVP_sha256();
+
+    EVP_DigestInit_ex(mdctx, md, nullptr);
+    EVP_DigestUpdate(mdctx, saltedPassword.data(), saltedPassword.size());
+    EVP_DigestFinal_ex(mdctx, computedHash.data(), &hashLen);
+    EVP_MD_CTX_free(mdctx);
+
+    computedHash.resize(hashLen);
 
     return computedHash == storedHashBytes;
 }
@@ -96,15 +117,15 @@ std::vector<unsigned char> User::base64Decode(const std::string& input) {
 std::string User::getDanRank() const {
     if (rank < 1000) return "Rookie";
     if (rank >= 2000) return "Radiant";
-    int dan = std::min(10, (rank - 1000) / 100 + 1);
+    uint32_t dan = std::min<uint32_t>(10, (rank - 1000) / 100 + 1);
     return std::to_string(dan) + " Dan";
 }
 
-void User::updateRank(int opponent_rank, bool win) {
-    int rank_diff = opponent_rank - rank;
-    int rank_change = 20 + static_cast<int>(std::round(rank_diff * 0.08));
-    rank += win ? rank_change : -rank_change;
-    rank = std::max(0, rank); // Ensure rank doesn't go below 0
+void User::updateRank(uint32_t opponent_rank, bool win) {
+    int32_t rank_diff = static_cast<int32_t>(opponent_rank) - static_cast<int32_t>(rank);
+    int32_t rank_change = 20 + static_cast<int32_t>(std::round(rank_diff * 0.08));
+    int32_t new_rank = static_cast<int32_t>(rank) + (win ? rank_change : -rank_change);
+    rank = static_cast<uint32_t>(std::max(0, new_rank));
 }
 
 bool UserManager::registerUser(const std::string& email, const std::string& username, const std::string& password) {
@@ -131,7 +152,7 @@ User* UserManager::getUser(const std::string& email) {
     return &it->second;
 }
 
-void UserManager::updateUserRank(const std::string& email, int opponent_rank, bool win) {
+void UserManager::updateUserRank(const std::string& email, uint32_t opponent_rank, bool win) {
     auto user = getUser(email);
     if (user) {
         user->updateRank(opponent_rank, win);

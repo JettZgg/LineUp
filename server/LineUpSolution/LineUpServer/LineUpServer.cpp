@@ -1,3 +1,5 @@
+#define _WIN32_WINNT 0x0A00
+
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -9,6 +11,9 @@
 #include "GameManager.hpp"
 #include "UserManager.hpp"
 #include "InputValidation.hpp"
+#include "Config.hpp"
+#include <cstdint>
+
 
 namespace beast = boost::beast;
 namespace websocket = beast::websocket;
@@ -90,11 +95,16 @@ void handle_message(websocket::stream<tcp::socket>& ws, const std::string& messa
                 return;
             }
 
-            uint32_t width = jv.at("width").as_int64();
-            uint32_t height = jv.at("height").as_int64();
-            uint32_t win_condition = jv.at("win_condition").as_int64();
+            uint32_t width = static_cast<uint32_t>(jv.at("width").as_int64());
+            uint32_t height = static_cast<uint32_t>(jv.at("height").as_int64());
+            uint32_t win_condition = static_cast<uint32_t>(jv.at("win_condition").as_int64());
 
-            if (width < 3 || width > 99 || height < 3 || height > 99 || win_condition < 3 || win_condition > 19) {
+            if (width < Config::getUInt32("min_board_width", 3) ||
+                width > Config::getUInt32("max_board_width", 99) ||
+                height < Config::getUInt32("min_board_height", 3) ||
+                height > Config::getUInt32("max_board_height", 99) ||
+                win_condition < Config::getUInt32("min_win_condition", 3) ||
+                win_condition > Config::getUInt32("max_win_condition", 19)) {
                 send_error(ws, "Invalid game parameters");
                 return;
             }
@@ -138,8 +148,8 @@ void handle_message(websocket::stream<tcp::socket>& ws, const std::string& messa
 
             std::string game_id = jv.at("game_id").as_string().c_str();
             std::string email = user_manager.getUserEmailFromSession(sessionId);
-            uint32_t x = jv.at("x").as_int64();
-            uint32_t y = jv.at("y").as_int64();
+            uint32_t x = static_cast<uint32_t>(jv.at("x").as_int64());
+            uint32_t y = static_cast<uint32_t>(jv.at("y").as_int64());
 
             GameManager::GameError result = game_manager.makeMove(game_id, email, x, y);
 
@@ -199,22 +209,16 @@ int main(int argc, char* argv[])
 {
     try
     {
-        if (argc != 3)
-        {
-            std::cerr << "Usage: LineUpServer <address> <port>\n";
-            std::cerr << "Example:\n";
-            std::cerr << "    LineUpServer 0.0.0.0 8080\n";
-            return EXIT_FAILURE;
-        }
+        Config::load("config.json");
 
-        auto const address = net::ip::make_address(argv[1]);
-        auto const port = static_cast<unsigned short>(std::atoi(argv[2]));
+        auto const address = net::ip::make_address(Config::getString("server_address", "0.0.0.0"));
+        auto const port = static_cast<unsigned short>(Config::getUInt32("server_port", 8080));
 
         net::io_context ioc{ 1 };
 
         tcp::acceptor acceptor{ ioc, {address, port} };
 
-        std::cout << "Server listening on " << address << ":" << port << std::endl;
+        std::cout << "Server listening on " << address << ":" << static_cast<unsigned int>(port) << std::endl;
 
         for (;;)
         {

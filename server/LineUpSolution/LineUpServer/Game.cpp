@@ -1,6 +1,7 @@
 #include "Game.hpp"
 #include <algorithm>
 #include <sstream>
+#include <cstdint>
 
 Game::Game(uint32_t width, uint32_t height, uint32_t win_condition)
     : width_(width), height_(height), win_condition_(win_condition),
@@ -45,28 +46,28 @@ bool Game::checkWin(uint32_t x, uint32_t y, uint32_t player) const
 {
     // Horizontal check
     uint32_t count = 0;
-    for (int i = std::max(0, static_cast<int>(x - win_condition_ + 1));
-        i < std::min(width_, x + win_condition_); i++) {
-        count = (board_[y][i] == player) ? count + 1 : 0;
+    for (int32_t i = std::max(0, static_cast<int32_t>(x) - static_cast<int32_t>(win_condition_) + 1);
+        i < std::min(static_cast<int32_t>(width_), static_cast<int32_t>(x) + static_cast<int32_t>(win_condition_)); i++) {
+        count = (board_[y][static_cast<uint32_t>(i)] == player) ? count + 1 : 0;
         if (count == win_condition_) return true;
     }
 
     // Vertical check
     count = 0;
-    for (int i = std::max(0, static_cast<int>(y - win_condition_ + 1));
-        i < std::min(height_, y + win_condition_); i++) {
-        count = (board_[i][x] == player) ? count + 1 : 0;
+    for (int32_t i = std::max(0, static_cast<int32_t>(y) - static_cast<int32_t>(win_condition_) + 1);
+        i < std::min(static_cast<int32_t>(height_), static_cast<int32_t>(y) + static_cast<int32_t>(win_condition_)); i++) {
+        count = (board_[static_cast<uint32_t>(i)][x] == player) ? count + 1 : 0;
         if (count == win_condition_) return true;
     }
 
     // Diagonal checks (top-left to bottom-right and top-right to bottom-left)
-    for (int d = 0; d < 2; d++) {
+    for (int32_t d = 0; d < 2; d++) {
         count = 0;
-        for (int i = -static_cast<int>(win_condition_) + 1; i < static_cast<int>(win_condition_); i++) {
-            int cx = x + (d == 0 ? i : -i);
-            int cy = y + i;
-            if (cx >= 0 && cx < width_ && cy >= 0 && cy < height_) {
-                count = (board_[cy][cx] == player) ? count + 1 : 0;
+        for (int32_t i = -static_cast<int32_t>(win_condition_) + 1; i < static_cast<int32_t>(win_condition_); i++) {
+            int32_t cx = static_cast<int32_t>(x) + (d == 0 ? i : -i);
+            int32_t cy = static_cast<int32_t>(y) + i;
+            if (cx >= 0 && cx < static_cast<int32_t>(width_) && cy >= 0 && cy < static_cast<int32_t>(height_)) {
+                count = (board_[static_cast<uint32_t>(cy)][static_cast<uint32_t>(cx)] == player) ? count + 1 : 0;
                 if (count == win_condition_) return true;
             }
         }

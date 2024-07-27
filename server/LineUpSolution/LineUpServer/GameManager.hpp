@@ -6,6 +6,7 @@
 #include <string>
 #include <memory>
 #include <array>
+#include <cstdint>
 
 class GameManager {
 public:

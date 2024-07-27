@@ -1,6 +1,7 @@
 #include "GameManager.hpp"
 #include <random>
 #include <sstream>
+#include <cstdint>
 
 GameManager::GameManager(UserManager& userManager) : userManager_(userManager) {}
 

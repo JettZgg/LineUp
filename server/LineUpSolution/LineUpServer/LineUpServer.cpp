@@ -180,17 +180,23 @@ void handle_message(websocket::stream<tcp::socket>& ws, const std::string& messa
 void handle_session(websocket::stream<tcp::socket>& ws) {
     try {
         ws.accept();
+        std::cout << "WebSocket connection established" << std::endl;
 
         for (;;) {
             beast::flat_buffer buffer;
             ws.read(buffer);
             std::string message = beast::buffers_to_string(buffer.data());
+            std::cout << "Message received: " << message << std::endl;
             handle_message(ws, message);
         }
     }
     catch (beast::system_error const& se) {
-        if (se.code() != websocket::error::closed)
-            std::cerr << "Error: " << se.code().message() << std::endl;
+        if (se.code() != websocket::error::closed) {
+            std::cerr << "WebSocket error: " << se.code().message() << std::endl;
+        }
+        else {
+            std::cout << "WebSocket connection closed" << std::endl;
+        }
     }
     catch (std::exception const& e) {
         std::cerr << "Error: " << e.what() << std::endl;

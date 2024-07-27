@@ -1,29 +1,50 @@
-let socket = null;
+let socket;
+const messageQueue = [];
 
-export const connectWebSocket = (url) => {
-    socket = new WebSocket(url);
+export const initWebSocket = () => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        return; // WebSocket is already open
+    }
+
+    socket = new WebSocket('ws://localhost:8080');
 
     socket.onopen = () => {
         console.log('WebSocket connection established');
+        while (messageQueue.length > 0) {
+            socket.send(messageQueue.shift());
+        }
     };
 
-    socket.onclose = () => {
-        console.log('WebSocket connection closed');
+    socket.onclose = (event) => {
+        console.log('WebSocket connection closed', event);
+        // Reconnect after 1 second
+        setTimeout(initWebSocket, 1000);
     };
 
-    return socket;
+    socket.onerror = (error) => {
+        console.log('WebSocket error', error);
+    };
+
+    socket.onmessage = (event) => {
+        console.log('Message from server ', event.data);
+        if (typeof handleMessage === 'function') {
+            handleMessage(event);
+        }
+    };
 };
 
 export const sendMessage = (message) => {
+    const msg = JSON.stringify(message);
     if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify(message));
+        socket.send(msg);
     } else {
-        console.error('WebSocket is not connected');
+        console.log('WebSocket connection is not open. Queueing message.');
+        messageQueue.push(msg);
     }
 };
 
-export const closeWebSocket = () => {
-    if (socket) {
-        socket.close();
-    }
+let handleMessage;
+
+export const setHandleMessage = (callback) => {
+    handleMessage = callback;
 };

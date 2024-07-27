@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { sendMessage } from '../WebSocket';
+import { sendMessage, initWebSocket, setHandleMessage } from '../WebSocket';
 
 function Register() {
     const [email, setEmail] = useState('');
@@ -9,18 +9,9 @@ function Register() {
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        sendMessage({
-            action: 'register',
-            email,
-            username,
-            password
-        });
-    };
+    useEffect(() => {
+        initWebSocket();
 
-    // Listen for WebSocket messages
-    React.useEffect(() => {
         const handleMessage = (event) => {
             const data = JSON.parse(event.data);
             if (data.action === 'register_result') {
@@ -32,14 +23,18 @@ function Register() {
             }
         };
 
-        const socket = new WebSocket('ws://localhost:8080'); // Replace with your server address
-        socket.addEventListener('message', handleMessage);
-
-        return () => {
-            socket.removeEventListener('message', handleMessage);
-            socket.close();
-        };
+        setHandleMessage(handleMessage);
     }, [navigate]);
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        sendMessage({
+            action: 'register',
+            email,
+            username,
+            password
+        });
+    };
 
     return (
         <div>

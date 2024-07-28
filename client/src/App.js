@@ -1,11 +1,16 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Register from './components/Register';
 import Login from './components/Login';
 import GameLobby from './components/GameLobby';
 import Game from './components/Game';
+import { initWebSocket } from './WebSocket';
 
 function App() {
+  useEffect(() => {
+    initWebSocket();
+  }, []);
+
   return (
     <Router>
       <div className="App">

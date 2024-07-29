@@ -1,0 +1,27 @@
+# Server configuration
+server:
+  port: 8080
+  host: "localhost"
+
+# Database configuration
+database:
+  host: "localhost"
+  port: 5432
+  user: "LineUp"
+  password: "LineUp"
+  name: "lineup_db"
+
+# JWT configuration
+jwt:
+  secret: "467731"
+  expiration: 24h  # Token expiration time
+
+# Game configuration
+game:
+  default_board_width: 10
+  default_board_height: 10
+  default_win_length: 5
+  max_board_size: 30
+  min_board_size: 3
+  max_win_length: 19
+  min_win_length: 3

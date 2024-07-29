@@ -35,6 +35,7 @@ A custom Gomoku
 -   **State Management**: Redux/Context API
 -   **Styling**: Styled-Components/CSS Modules
 -   **Real-Time Communication**: Socket.IO-client
+-   **Bundler**: Vite
 
 ### Data Analysis (Python)
 

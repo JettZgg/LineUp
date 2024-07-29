@@ -23,7 +23,7 @@ A custom Gomoku
 ### Server-Side (Go)
 
 -   **Language**: Go
--   **Framework**: Gorilla Mux for routing, Go WebSocket for real-time updates.
+-   **Framework**: Gin for routing, Go WebSocket for real-time updates.
 -   **Configuration**: Viper for configuration management.
 -   **Testing**: Go testing tools.
 -   **IDE**: Visual Studio Code

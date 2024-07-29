@@ -4,7 +4,7 @@ package db
 type User struct {
 	ID       int    `json:"id"`
 	Username string `json:"username"`
-	Password string `json:"-"`
+	Password string `json:"password"`
 }
 
 func CreateUser(user *User) error {

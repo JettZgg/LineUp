@@ -1,3 +1,4 @@
+// File: internal/middleware/auth.go
 package middleware
 
 import (
@@ -5,30 +6,33 @@ import (
 	"strings"
 
 	"github.com/JettZgg/LineUp/internal/auth"
-	"github.com/JettZgg/LineUp/internal/utils"
+	"github.com/gin-gonic/gin"
 )
 
-func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
+func AuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			utils.NewAppError(nil, "Missing authorization header", http.StatusUnauthorized).LogAndRespond(w)
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing authorization header"})
+			c.Abort()
 			return
 		}
 
 		bearerToken := strings.Split(authHeader, " ")
 		if len(bearerToken) != 2 {
-			utils.NewAppError(nil, "Invalid authorization header", http.StatusUnauthorized).LogAndRespond(w)
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization header"})
+			c.Abort()
 			return
 		}
 
 		username, err := auth.ValidateToken(bearerToken[1])
 		if err != nil {
-			utils.NewAppError(err, "Invalid token", http.StatusUnauthorized).LogAndRespond(w)
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.Abort()
 			return
 		}
 
-		r.Header.Set("Username", username)
-		next.ServeHTTP(w, r)
+		c.Set("username", username)
+		c.Next()
 	}
 }

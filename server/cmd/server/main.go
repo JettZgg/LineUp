@@ -1,3 +1,4 @@
+// File: main.go
 package main
 
 import (
@@ -20,10 +21,6 @@ func main() {
 	go hub.Run()
 
 	// Create and start server
-	srv, err := server.New(cfg, hub)
-	if err != nil {
-		log.Fatalf("Failed to create server: %v", err)
-	}
-
+	srv := server.New(cfg, hub)
 	log.Fatal(srv.Start())
 }

@@ -3,6 +3,7 @@ package game
 import (
 	"errors"
 	"fmt"
+	"time"
 )
 
 type MatchConfig struct {
@@ -18,18 +19,28 @@ type Match struct {
 	Player2ID string      `json:"player2Id"`
 	Status    string      `json:"status"`
 	Config    MatchConfig `json:"config"`
+	StartTime time.Time   `json:"startTime"`
 }
 
 var matches = make(map[string]*Match)
 
 func CreateMatch(config MatchConfig) (*Match, error) {
 	match := &Match{
-		ID:     generateMatchID(),
-		Board:  makeBoard(config.BoardWidth, config.BoardHeight),
-		Status: "waiting",
-		Config: config,
+		ID:        generateMatchID(),
+		Board:     makeBoard(config.BoardWidth, config.BoardHeight),
+		Status:    "waiting",
+		Config:    config,
+		StartTime: time.Now().UTC(), // Store time in UTC
 	}
 	matches[match.ID] = match
+	return match, nil
+}
+
+func GetMatch(matchID string) (*Match, error) {
+	match, exists := matches[matchID]
+	if !exists {
+		return nil, errors.New("match not found")
+	}
 	return match, nil
 }
 

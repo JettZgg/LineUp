@@ -1,101 +1,116 @@
+// File: internal/api/handlers.go
 package api
 
 import (
-	"encoding/json"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/JettZgg/LineUp/internal/auth"
 	"github.com/JettZgg/LineUp/internal/db"
 	"github.com/JettZgg/LineUp/internal/game"
+	"github.com/gin-gonic/gin"
 )
 
-func RegisterHandler(w http.ResponseWriter, r *http.Request) {
+func RegisterHandler(c *gin.Context) {
 	var user db.User
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&user); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
 	if err := auth.RegisterUser(&user); err != nil {
-		http.Error(w, "Failed to register user", http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register user"})
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"message": "User registered successfully"})
+	c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully"})
 }
 
-func LoginHandler(w http.ResponseWriter, r *http.Request) {
+func LoginHandler(c *gin.Context) {
 	var credentials struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&credentials); err != nil {
+		log.Printf("Error binding JSON: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
 	token, err := auth.LoginUser(credentials.Username, credentials.Password)
 	if err != nil {
-		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		log.Printf("Login error for user %s: %v", credentials.Username, err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"token": token})
+	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
-func CreateMatchHandler(w http.ResponseWriter, r *http.Request) {
+func CreateMatchHandler(c *gin.Context) {
 	var matchConfig game.MatchConfig
-	if err := json.NewDecoder(r.Body).Decode(&matchConfig); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&matchConfig); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
 	match, err := game.CreateMatch(matchConfig)
 	if err != nil {
-		http.Error(w, "Failed to create match", http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create match"})
 		return
 	}
 
-	json.NewEncoder(w).Encode(match)
+	c.JSON(http.StatusOK, gin.H{
+		"match":      match,
+		"serverTime": time.Now().UTC(),
+	})
 }
 
-func JoinMatchHandler(w http.ResponseWriter, r *http.Request) {
-	var joinRequest struct {
-		MatchID  string `json:"matchId"`
-		PlayerID string `json:"playerId"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&joinRequest); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+func JoinMatchHandler(c *gin.Context) {
+	matchID := c.Param("matchID")
+	playerID := c.GetString("username") // Assuming the username is set in the context by the auth middleware
+
+	if err := game.JoinMatch(matchID, playerID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to join match"})
 		return
 	}
 
-	if err := game.JoinMatch(joinRequest.MatchID, joinRequest.PlayerID); err != nil {
-		http.Error(w, "Failed to join match", http.StatusBadRequest)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Joined match successfully"})
+	c.JSON(http.StatusOK, gin.H{"message": "Joined match successfully"})
 }
 
-func MakeMoveHandler(w http.ResponseWriter, r *http.Request) {
+func MakeMoveHandler(c *gin.Context) {
+	matchID := c.Param("matchID")
+	playerID := c.GetString("username") // Assuming the username is set in the context by the auth middleware
+
 	var moveRequest struct {
-		MatchID  string `json:"matchId"`
-		PlayerID string `json:"playerId"`
-		X        int    `json:"x"`
-		Y        int    `json:"y"`
+		X int `json:"x"`
+		Y int `json:"y"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&moveRequest); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&moveRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
-	result, err := game.MakeMove(moveRequest.MatchID, moveRequest.PlayerID, moveRequest.X, moveRequest.Y)
+	result, err := game.MakeMove(matchID, playerID, moveRequest.X, moveRequest.Y)
 	if err != nil {
-		http.Error(w, "Invalid move", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid move"})
 		return
 	}
 
-	json.NewEncoder(w).Encode(result)
+	c.JSON(http.StatusOK, result)
+}
+
+func GetMatchHandler(c *gin.Context) {
+	matchID := c.Param("matchID")
+	match, err := game.GetMatch(matchID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Match not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"match":      match,
+		"serverTime": time.Now().UTC(),
+	})
 }

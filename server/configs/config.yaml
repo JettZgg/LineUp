@@ -8,8 +8,8 @@ database:
   host: "localhost"
   port: 5432
   user: "LineUp"
-  password: "LineUp"
-  name: "lineup_db"
+  password: "467731"
+  name: "LineUp"
 
 # JWT configuration
 jwt:

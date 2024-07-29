@@ -1,9 +1,13 @@
 package game
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/JettZgg/LineUp/internal/db"
+	"github.com/JettZgg/LineUp/internal/utils/websocket"
 )
 
 type MatchConfig struct {
@@ -20,6 +24,7 @@ type Match struct {
 	Status    string      `json:"status"`
 	Config    MatchConfig `json:"config"`
 	StartTime time.Time   `json:"startTime"`
+	MoveCount int         `json:"moveCount"`
 }
 
 var matches = make(map[string]*Match)
@@ -30,8 +35,23 @@ func CreateMatch(config MatchConfig) (*Match, error) {
 		Board:     makeBoard(config.BoardWidth, config.BoardHeight),
 		Status:    "waiting",
 		Config:    config,
-		StartTime: time.Now().UTC(), // Store time in UTC
+		StartTime: time.Now().UTC(),
 	}
+
+	dbMatch := &db.Match{
+		ID:          match.ID,
+		Player1ID:   match.Player1ID,
+		Status:      match.Status,
+		StartTime:   match.StartTime,
+		BoardWidth:  config.BoardWidth,
+		BoardHeight: config.BoardHeight,
+		WinLength:   config.WinLength,
+	}
+
+	if err := db.CreateMatch(dbMatch); err != nil {
+		return nil, fmt.Errorf("failed to create match in database: %w", err)
+	}
+
 	matches[match.ID] = match
 	return match, nil
 }
@@ -61,7 +81,7 @@ func JoinMatch(matchID, playerID string) error {
 	return nil
 }
 
-func MakeMove(matchID, playerID string, x, y int) (map[string]interface{}, error) {
+func MakeMove(hub *websocket.Hub, matchID, playerID string, x, y int) (map[string]interface{}, error) {
 	match, exists := matches[matchID]
 	if !exists {
 		return nil, errors.New("match not found")
@@ -78,16 +98,77 @@ func MakeMove(matchID, playerID string, x, y int) (map[string]interface{}, error
 		symbol = "O"
 	}
 	match.Board[y][x] = symbol
+	match.MoveCount++
 
-	if checkWin(match.Board, x, y, match.Config.WinLength) {
-		match.Status = "finished"
-		return map[string]interface{}{"result": "win", "winner": playerID}, nil
+	// Store the move in the database
+	move := &db.Move{
+		MatchID:    matchID,
+		PlayerID:   playerID,
+		X:          x,
+		Y:          y,
+		MoveNumber: match.MoveCount,
+		Timestamp:  time.Now().UTC(),
 	}
-	if isBoardFull(match.Board) {
-		match.Status = "finished"
-		return map[string]interface{}{"result": "draw"}, nil
+	if err := db.CreateMove(move); err != nil {
+		fmt.Printf("Failed to store move in database: %v", err)
 	}
-	return map[string]interface{}{"result": "ongoing"}, nil
+
+	result := checkGameResult(match, x, y)
+
+	// Create a message to broadcast
+	updateMsg := map[string]interface{}{
+		"type":    "moveUpdate",
+		"matchID": matchID,
+		"board":   match.Board,
+		"result":  result,
+	}
+
+	msgBytes, _ := json.Marshal(updateMsg)
+	hub.BroadcastToMatch(matchID, msgBytes)
+
+	if result["result"] != "ongoing" {
+		match.Status = "finished"
+		endTime := time.Now()
+		winner := playerID
+		if result["result"] == "draw" {
+			winner = ""
+		}
+		if err := updateMatchInDatabase(match, endTime, winner); err != nil {
+			fmt.Printf("Failed to update match in database: %v", err)
+		}
+		delete(matches, matchID) // Remove finished game from memory
+	}
+
+	return result, nil
+}
+
+func updateMatchInDatabase(match *Match, endTime time.Time, winner string) error {
+	dbMatch := &db.Match{
+		ID:        match.ID,
+		Player2ID: match.Player2ID,
+		Status:    match.Status,
+		EndTime:   endTime,
+		Winner:    winner,
+	}
+	return db.UpdateMatch(dbMatch)
+}
+
+func GetMatchHistory(userID string, limit int) ([]db.Match, error) {
+	return db.GetRecentMatchesByUser(userID, limit)
+}
+
+func GetMatchReplay(matchID string) (*db.Match, []db.Move, error) {
+	match, err := db.GetMatchByID(matchID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	moves, err := db.GetMovesByMatchID(matchID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return match, moves, nil
 }
 
 func makeBoard(width, height int) [][]string {
@@ -134,6 +215,16 @@ func isBoardFull(board [][]string) bool {
 		}
 	}
 	return true
+}
+
+func checkGameResult(match *Match, x, y int) map[string]interface{} {
+	if checkWin(match.Board, x, y, match.Config.WinLength) {
+		return map[string]interface{}{"result": "win"}
+	}
+	if isBoardFull(match.Board) {
+		return map[string]interface{}{"result": "draw"}
+	}
+	return map[string]interface{}{"result": "ongoing"}
 }
 
 func generateMatchID() string {

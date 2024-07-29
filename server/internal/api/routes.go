@@ -21,12 +21,20 @@ func SetupRoutes(r *gin.Engine, hub *websocket.Hub) {
 		auth.POST("/join-match/:matchID", JoinMatchHandler)
 		auth.POST("/make-move/:matchID", MakeMoveHandler)
 		auth.GET("/match/:matchID", GetMatchHandler) // New route for getting match details
+		auth.GET("/match-history", GetMatchHistoryHandler)
+		auth.GET("/match-replay/:matchID", GetMatchReplayHandler)
 
 		// Add any other authenticated routes here
 	}
 
 	// WebSocket route
 	r.GET("/ws/:matchID", func(c *gin.Context) {
-		websocket.ServeWs(hub, c.Writer, c.Request)
+		matchID := c.Param("matchID")
+		websocket.ServeWs(hub, c.Writer, c.Request, matchID)
+	})
+
+	r.Use(func(c *gin.Context) {
+		c.Set("hub", hub)
+		c.Next()
 	})
 }

@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 
@@ -12,6 +13,7 @@ type Hub struct {
 	broadcast  chan []byte
 	register   chan *Client
 	unregister chan *Client
+	matches    map[string]map[*Client]bool
 }
 
 func NewHub() *Hub {
@@ -20,6 +22,7 @@ func NewHub() *Hub {
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),
+		matches:    make(map[string]map[*Client]bool),
 	}
 }
 
@@ -28,18 +31,31 @@ func (h *Hub) Run() {
 		select {
 		case client := <-h.register:
 			h.clients[client] = true
+			if _, ok := h.matches[client.matchID]; !ok {
+				h.matches[client.matchID] = make(map[*Client]bool)
+			}
+			h.matches[client.matchID][client] = true
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
+				delete(h.matches[client.matchID], client)
 				close(client.send)
 			}
 		case message := <-h.broadcast:
-			for client := range h.clients {
+			// Parse the message to get the matchID
+			var msg struct {
+				MatchID string `json:"matchID"`
+				// other fields...
+			}
+			json.Unmarshal(message, &msg)
+
+			for client := range h.matches[msg.MatchID] {
 				select {
 				case client.send <- message:
 				default:
 					close(client.send)
 					delete(h.clients, client)
+					delete(h.matches[msg.MatchID], client)
 				}
 			}
 		}
@@ -54,15 +70,29 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
+func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request, matchID string) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
+	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256), matchID: matchID}
 	client.hub.register <- client
 
 	go client.writePump()
 	go client.readPump()
+}
+
+func (h *Hub) BroadcastToMatch(matchID string, message []byte) {
+	if clients, ok := h.matches[matchID]; ok {
+		for client := range clients {
+			select {
+			case client.send <- message:
+			default:
+				close(client.send)
+				delete(h.clients, client)
+				delete(h.matches[matchID], client)
+			}
+		}
+	}
 }

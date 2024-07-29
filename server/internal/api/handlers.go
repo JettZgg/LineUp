@@ -9,6 +9,7 @@ import (
 	"github.com/JettZgg/LineUp/internal/auth"
 	"github.com/JettZgg/LineUp/internal/db"
 	"github.com/JettZgg/LineUp/internal/game"
+	"github.com/JettZgg/LineUp/internal/utils/websocket"
 	"github.com/gin-gonic/gin"
 )
 
@@ -81,7 +82,7 @@ func JoinMatchHandler(c *gin.Context) {
 
 func MakeMoveHandler(c *gin.Context) {
 	matchID := c.Param("matchID")
-	playerID := c.GetString("username") // Assuming the username is set in the context by the auth middleware
+	playerID := c.GetString("username")
 
 	var moveRequest struct {
 		X int `json:"x"`
@@ -92,7 +93,10 @@ func MakeMoveHandler(c *gin.Context) {
 		return
 	}
 
-	result, err := game.MakeMove(matchID, playerID, moveRequest.X, moveRequest.Y)
+	// Get the hub from the context or wherever it's stored
+	hub := c.MustGet("hub").(*websocket.Hub)
+
+	result, err := game.MakeMove(hub, matchID, playerID, moveRequest.X, moveRequest.Y)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid move"})
 		return
@@ -112,5 +116,33 @@ func GetMatchHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"match":      match,
 		"serverTime": time.Now().UTC(),
+	})
+}
+
+func GetMatchHistoryHandler(c *gin.Context) {
+	userID := c.GetString("username") // Assuming the username is set in the context by the auth middleware
+	limit := 10                       // Or get this from query parameter
+
+	matches, err := game.GetMatchHistory(userID, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve match history"})
+		return
+	}
+
+	c.JSON(http.StatusOK, matches)
+}
+
+func GetMatchReplayHandler(c *gin.Context) {
+	matchID := c.Param("matchID")
+
+	match, moves, err := game.GetMatchReplay(matchID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve match replay"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"match": match,
+		"moves": moves,
 	})
 }

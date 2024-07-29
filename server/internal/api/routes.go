@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/JettZgg/LineUp/internal/middleware"
-	"github.com/JettZgg/LineUp/internal/websocket"
+	"github.com/JettZgg/LineUp/internal/utils/websocket"
 	"github.com/gorilla/mux"
 )
 

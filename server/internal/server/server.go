@@ -7,7 +7,7 @@ import (
 	"github.com/JettZgg/LineUp/internal/api"
 	"github.com/JettZgg/LineUp/internal/config"
 	"github.com/JettZgg/LineUp/internal/db"
-	"github.com/JettZgg/LineUp/internal/websocket"
+	"github.com/JettZgg/LineUp/internal/utils/websocket"
 )
 
 type Server struct {

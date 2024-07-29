@@ -5,7 +5,7 @@ import (
 
 	"github.com/JettZgg/LineUp/internal/config"
 	"github.com/JettZgg/LineUp/internal/server"
-	"github.com/JettZgg/LineUp/internal/websocket"
+	"github.com/JettZgg/LineUp/internal/utils/websocket"
 )
 
 func main() {

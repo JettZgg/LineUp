@@ -2,6 +2,8 @@
 package api
 
 import (
+	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/JettZgg/LineUp/internal/middleware"
@@ -42,7 +44,11 @@ func SetupRoutes(r *gin.Engine, hub *websocket.Hub) {
 
 	// WebSocket route
 	r.GET("/ws/:matchID", func(c *gin.Context) {
-		matchID := c.Param("matchID")
+		matchID, err := strconv.ParseInt(c.Param("matchID"), 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid match ID"})
+			return
+		}
 		websocket.ServeWs(hub, c.Writer, c.Request, matchID)
 	})
 

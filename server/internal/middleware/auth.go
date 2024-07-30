@@ -10,37 +10,37 @@ import (
 )
 
 func AuthMiddleware() gin.HandlerFunc {
-    return func(c *gin.Context) {
-        authHeader := c.GetHeader("Authorization")
-        if authHeader == "" {
-            c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing authorization header"})
-            c.Abort()
-            return
-        }
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing authorization header"})
+			c.Abort()
+			return
+		}
 
-        bearerToken := strings.Split(authHeader, " ")
-        if len(bearerToken) != 2 {
-            c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization header"})
-            c.Abort()
-            return
-        }
+		bearerToken := strings.Split(authHeader, " ")
+		if len(bearerToken) != 2 {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization header"})
+			c.Abort()
+			return
+		}
 
-        claims, err := auth.ValidateToken(bearerToken[1])
-        if err != nil {
-            c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-            c.Abort()
-            return
-        }
+		claims, err := auth.ValidateToken(bearerToken[1])
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.Abort()
+			return
+		}
 
-        // Set the user ID in the context
-        if userID, ok := claims["userID"].(float64); ok {
-            c.Set("userID", int(userID))
-        } else {
-            c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID in token"})
-            c.Abort()
-            return
-        }
+		// Set the user UID in the context
+		if uid, ok := claims["uid"].(float64); ok {
+			c.Set("uid", int64(uid))
+		} else {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user UID in token"})
+			c.Abort()
+			return
+		}
 
-        c.Next()
-    }
+		c.Next()
+	}
 }

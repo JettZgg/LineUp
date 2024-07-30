@@ -7,7 +7,7 @@ import (
 type Move struct {
 	ID         int       `json:"id"`
 	MatchID    string    `json:"match_id"`
-	PlayerID   string    `json:"player_id"`
+	PlayerID   int       `json:"player_id"`
 	X          int       `json:"x"`
 	Y          int       `json:"y"`
 	MoveNumber int       `json:"move_number"`

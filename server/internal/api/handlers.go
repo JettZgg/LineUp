@@ -29,36 +29,46 @@ func RegisterHandler(c *gin.Context) {
 }
 
 func LoginHandler(c *gin.Context) {
-	var credentials struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-	}
-	if err := c.ShouldBindJSON(&credentials); err != nil {
-		log.Printf("Error binding JSON: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
-		return
-	}
+    var credentials struct {
+        Username string `json:"username"`
+        Password string `json:"password"`
+    }
+    if err := c.ShouldBindJSON(&credentials); err != nil {
+        log.Printf("Error binding JSON: %v", err)
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+        return
+    }
 
-	token, err := auth.LoginUser(credentials.Username, credentials.Password)
-	if err != nil {
-		log.Printf("Login error for user %s: %v", credentials.Username, err)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
-		return
-	}
+    user, token, err := auth.LoginUser(credentials.Username, credentials.Password)
+    if err != nil {
+        log.Printf("Login error for user %s: %v", credentials.Username, err)
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+        return
+    }
 
-	c.JSON(http.StatusOK, gin.H{"token": token})
+    // Set the user ID in the context
+    c.Set("userID", user.ID)
+
+    c.JSON(http.StatusOK, gin.H{"token": token, "userID": user.ID})
 }
 
 func CreateMatchHandler(c *gin.Context) {
 	var matchConfig game.MatchConfig
 	if err := c.ShouldBindJSON(&matchConfig); err != nil {
+		log.Printf("Error binding JSON: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
-	match, err := game.CreateMatch(matchConfig)
+	// Get the user ID from the authenticated context
+	userID := c.GetInt("userID") // Make sure your auth middleware sets this
+
+	log.Printf("Attempting to create match with config: %+v for user: %d", matchConfig, userID)
+
+	match, err := game.CreateMatch(matchConfig, userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create match"})
+		log.Printf("Error creating match: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create match", "details": err.Error()})
 		return
 	}
 
@@ -70,7 +80,7 @@ func CreateMatchHandler(c *gin.Context) {
 
 func JoinMatchHandler(c *gin.Context) {
 	matchID := c.Param("matchID")
-	playerID := c.GetString("username") // Assuming the username is set in the context by the auth middleware
+    playerID := c.GetInt("userID") // Assuming the username is set in the context by the auth middleware
 
 	if err := game.JoinMatch(matchID, playerID); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to join match"})
@@ -82,13 +92,13 @@ func JoinMatchHandler(c *gin.Context) {
 
 func MakeMoveHandler(c *gin.Context) {
 	matchID := c.Param("matchID")
-	playerID := c.GetString("username")
+	playerID := c.GetInt("userID")
 
 	var moveRequest struct {
 		X int `json:"x"`
 		Y int `json:"y"`
 	}
-	if err := c.ShouldBindJSON(&moveRequest); err != nil {
+	if err := game.JoinMatch(matchID, playerID); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
@@ -120,7 +130,7 @@ func GetMatchHandler(c *gin.Context) {
 }
 
 func GetMatchHistoryHandler(c *gin.Context) {
-	userID := c.GetString("username") // Assuming the username is set in the context by the auth middleware
+	userID := c.GetInt("userID") // Assuming the username is set in the context by the auth middleware
 	limit := 10                       // Or get this from query parameter
 
 	matches, err := game.GetMatchHistory(userID, limit)

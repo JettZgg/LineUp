@@ -27,47 +27,46 @@ func RegisterUser(user *db.User) error {
 	return db.CreateUser(user)
 }
 
-func LoginUser(username, password string) (string, error) {
+func LoginUser(username, password string) (*db.User, string, error) {
 	user, err := db.GetUserByUsername(username)
 	if err != nil {
 		log.Printf("Error retrieving user %s: %v", username, err)
-		return "", errors.New("invalid credentials")
+		return nil, "", errors.New("invalid credentials")
 	}
 
 	// Compare the hashed password
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
 		log.Printf("Password mismatch for user %s: %v", username, err)
-		return "", errors.New("invalid credentials")
+		return nil, "", errors.New("invalid credentials")
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username": user.Username,
-		"exp":      time.Now().Add(24 * time.Hour).Unix(),
+		"userID": user.ID,
+		"exp":    time.Now().Add(24 * time.Hour).Unix(),
 	})
 
 	tokenString, err := token.SignedString(jwtKey)
 	if err != nil {
 		log.Printf("Error generating token for user %s: %v", username, err)
-		return "", errors.New("could not generate token")
+		return nil, "", errors.New("could not generate token")
 	}
 
-	return tokenString, nil
+	return user, tokenString, nil
 }
 
-func ValidateToken(tokenString string) (string, error) {
+func ValidateToken(tokenString string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return jwtKey, nil
 	})
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		username := claims["username"].(string)
-		return username, nil
+		return claims, nil
 	}
 
-	return "", errors.New("invalid token")
+	return nil, errors.New("invalid token")
 }

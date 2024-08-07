@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/JettZgg/LineUp/internal/db"
+	"github.com/JettZgg/LineUp/internal/utils"
 	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -14,7 +15,7 @@ import (
 var jwtKey = []byte("467731") // Replace with a secure key from config
 
 func RegisterUser(user *db.User) error {
-	// Hash the password
+	user.UID = utils.GenerateUID()
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
@@ -42,8 +43,8 @@ func LoginUser(username, password string) (*db.User, string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userID": user.ID,
-		"exp":    time.Now().Add(24 * time.Hour).Unix(),
+		"uid": user.UID,
+		"exp": time.Now().Add(24 * time.Hour).Unix(),
 	})
 
 	tokenString, err := token.SignedString(jwtKey)

@@ -13,7 +13,7 @@ type Hub struct {
 	broadcast  chan []byte
 	register   chan *Client
 	unregister chan *Client
-	matches    map[string]map[*Client]bool
+	matches    map[int64]map[*Client]bool
 }
 
 func NewHub() *Hub {
@@ -22,7 +22,7 @@ func NewHub() *Hub {
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),
-		matches:    make(map[string]map[*Client]bool),
+		matches:    make(map[int64]map[*Client]bool),
 	}
 }
 
@@ -44,7 +44,7 @@ func (h *Hub) Run() {
 		case message := <-h.broadcast:
 			// Parse the message to get the matchID
 			var msg struct {
-				MatchID string `json:"matchID"`
+				MatchID int64 `json:"matchID"`
 				// other fields...
 			}
 			json.Unmarshal(message, &msg)
@@ -70,7 +70,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request, matchID string) {
+func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request, matchID int64) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
@@ -83,7 +83,7 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request, matchID string) {
 	go client.readPump()
 }
 
-func (h *Hub) BroadcastToMatch(matchID string, message []byte) {
+func (h *Hub) BroadcastToMatch(matchID int64, message []byte) {
 	if clients, ok := h.matches[matchID]; ok {
 		for client := range clients {
 			select {

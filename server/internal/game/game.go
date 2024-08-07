@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/JettZgg/LineUp/internal/db"
+	"github.com/JettZgg/LineUp/internal/utils"
 	"github.com/JettZgg/LineUp/internal/utils/websocket"
 )
 
@@ -18,23 +19,22 @@ type MatchConfig struct {
 }
 
 type Match struct {
-	ID        string      `json:"id"`
+	MID       int64       `json:"id"`
 	Board     [][]string  `json:"board"`
-	Player1ID int         `json:"player1Id"`
-	Player2ID int         `json:"player2Id"`
+	Player1ID int64       `json:"player1Id"`
+	Player2ID int64       `json:"player2Id"`
 	Status    string      `json:"status"`
 	Config    MatchConfig `json:"config"`
 	StartTime time.Time   `json:"startTime"`
 	MoveCount int         `json:"moveCount"`
 }
 
-var matches = make(map[string]*Match)
+var matches = make(map[int64]*Match)
 
-func CreateMatch(config MatchConfig, playerID int) (*Match, error) {
-	log.Printf("Creating match with config: %+v for player: %d", config, playerID)
-
+func CreateMatch(config MatchConfig, playerID int64) (*Match, error) {
+	matchID := utils.GenerateMID()
 	match := &Match{
-		ID:        generateMatchID(),
+		MID:       matchID,
 		Board:     makeBoard(config.BoardWidth, config.BoardHeight),
 		Player1ID: playerID,
 		Status:    "waiting",
@@ -42,10 +42,8 @@ func CreateMatch(config MatchConfig, playerID int) (*Match, error) {
 		StartTime: time.Now().UTC(),
 	}
 
-	log.Printf("Generated match ID: %s", match.ID)
-
 	dbMatch := &db.Match{
-		ID:          match.ID,
+		MID:         match.MID,
 		Player1ID:   playerID,
 		Status:      match.Status,
 		StartTime:   match.StartTime,
@@ -55,16 +53,14 @@ func CreateMatch(config MatchConfig, playerID int) (*Match, error) {
 	}
 
 	if err := db.CreateMatch(dbMatch); err != nil {
-		log.Printf("Error creating match in database: %v", err)
 		return nil, fmt.Errorf("failed to create match in database: %w", err)
 	}
 
-	matches[match.ID] = match
-	log.Printf("Match created successfully: %+v", match)
+	matches[match.MID] = match
 	return match, nil
 }
 
-func JoinMatch(matchID string, playerID int) error {
+func JoinMatch(matchID int64, playerID int64) error {
 	match, exists := matches[matchID]
 	if !exists {
 		return errors.New("match not found")
@@ -81,7 +77,7 @@ func JoinMatch(matchID string, playerID int) error {
 
 	// Update the match in the database
 	dbMatch := &db.Match{
-		ID:        match.ID,
+		MID:       match.MID,
 		Player2ID: playerID,
 		Status:    match.Status,
 	}
@@ -90,11 +86,11 @@ func JoinMatch(matchID string, playerID int) error {
 		return fmt.Errorf("failed to update match in database: %w", err)
 	}
 
-	log.Printf("Player %d joined match %s", playerID, matchID)
+	log.Printf("Player %d joined match %d", playerID, matchID)
 	return nil
 }
 
-func GetMatch(matchID string) (*Match, error) {
+func GetMatch(matchID int64) (*Match, error) {
 	match, exists := matches[matchID]
 	if !exists {
 		// If not in memory, try to fetch from database
@@ -104,7 +100,7 @@ func GetMatch(matchID string) (*Match, error) {
 		}
 		// Convert db.Match to game.Match
 		match = &Match{
-			ID:        dbMatch.ID,
+			MID:       dbMatch.MID,
 			Player1ID: dbMatch.Player1ID,
 			Player2ID: dbMatch.Player2ID,
 			Status:    dbMatch.Status,
@@ -121,7 +117,7 @@ func GetMatch(matchID string) (*Match, error) {
 	return match, nil
 }
 
-func MakeMove(hub *websocket.Hub, matchID string, playerID int, x, y int) (map[string]interface{}, error) {
+func MakeMove(hub *websocket.Hub, matchID int64, playerID int64, x, y int) (map[string]interface{}, error) {
 	match, err := GetMatch(matchID)
 	if err != nil {
 		return nil, err
@@ -182,9 +178,9 @@ func MakeMove(hub *websocket.Hub, matchID string, playerID int, x, y int) (map[s
 	return result, nil
 }
 
-func updateMatchInDatabase(match *Match, endTime time.Time, winner int) error {
+func updateMatchInDatabase(match *Match, endTime time.Time, winner int64) error {
 	dbMatch := &db.Match{
-		ID:        match.ID,
+		MID:       match.MID,
 		Player2ID: match.Player2ID,
 		Status:    match.Status,
 		EndTime:   endTime,
@@ -193,11 +189,11 @@ func updateMatchInDatabase(match *Match, endTime time.Time, winner int) error {
 	return db.UpdateMatch(dbMatch)
 }
 
-func GetMatchHistory(userID int, limit int) ([]db.Match, error) {
+func GetMatchHistory(userID int64, limit int) ([]db.Match, error) {
 	return db.GetRecentMatchesByUser(userID, limit)
 }
 
-func GetMatchReplay(matchID string) (*db.Match, []db.Move, error) {
+func GetMatchReplay(matchID int64) (*db.Match, []db.Move, error) {
 	match, err := db.GetMatchByID(matchID)
 	if err != nil {
 		return nil, nil, err
@@ -265,9 +261,4 @@ func checkGameResult(match *Match, x, y int) map[string]interface{} {
 		return map[string]interface{}{"result": "draw"}
 	}
 	return map[string]interface{}{"result": "ongoing"}
-}
-
-func generateMatchID() string {
-	// Implement a proper unique ID generation mechanism
-	return fmt.Sprintf("match_%d", len(matches)+1)
 }

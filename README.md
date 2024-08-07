@@ -61,3 +61,17 @@ A custom Gomoku
 -   **Containerization**: Docker
 -   **Monitoring and Logging**: Prometheus, Grafana, ELK Stack
 -   **Testing**: Postman
+
+## How to run
+### Server
+```bash
+cd server
+go mod tidy # only run this when it's first time
+go run cmd/server/main.go
+```
+
+### client
+```bash
+cd client
+npm run dev
+```

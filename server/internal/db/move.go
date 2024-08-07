@@ -6,8 +6,8 @@ import (
 
 type Move struct {
 	ID         int       `json:"id"`
-	MatchID    string    `json:"match_id"`
-	PlayerID   int       `json:"player_id"`
+	MatchID    int64     `json:"match_id"`
+	PlayerID   int64     `json:"player_id"`
 	X          int       `json:"x"`
 	Y          int       `json:"y"`
 	MoveNumber int       `json:"move_number"`
@@ -22,7 +22,7 @@ func CreateMove(move *Move) error {
 	return err
 }
 
-func GetMovesByMatchID(matchID string) ([]Move, error) {
+func GetMovesByMatchID(matchID int64) ([]Move, error) {
 	rows, err := DB.Query("SELECT id, match_id, player_id, x, y, move_number, timestamp FROM moves WHERE match_id = $1 ORDER BY move_number", matchID)
 	if err != nil {
 		return nil, err

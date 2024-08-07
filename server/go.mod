@@ -3,6 +3,7 @@ module github.com/JettZgg/LineUp
 go 1.22.5
 
 require (
+	github.com/bwmarrin/snowflake v0.3.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.10.0

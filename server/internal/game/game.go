@@ -19,14 +19,15 @@ type MatchConfig struct {
 }
 
 type Match struct {
-	MID       int64       `json:"id"`
-	Board     [][]string  `json:"board"`
-	Player1ID int64       `json:"player1Id"`
-	Player2ID int64       `json:"player2Id"`
-	Status    string      `json:"status"`
-	Config    MatchConfig `json:"config"`
-	StartTime time.Time   `json:"startTime"`
-	MoveCount int         `json:"moveCount"`
+	MID              int64       `json:"id"`
+	Board            [][]string  `json:"board"`
+	Player1ID        int64       `json:"player1Id"`
+	Player2ID        int64       `json:"player2Id"`
+	Status           string      `json:"status"`
+	Config           MatchConfig `json:"config"`
+	StartTime        time.Time   `json:"startTime"`
+	FirstMovePlayerID int64       `json:"firstMovePlayerId"`
+	Moves            []db.Move   `json:"moves"`
 }
 
 var matches = make(map[int64]*Match)
@@ -34,22 +35,24 @@ var matches = make(map[int64]*Match)
 func CreateMatch(config MatchConfig, playerID int64) (*Match, error) {
 	matchID := utils.GenerateMID()
 	match := &Match{
-		MID:       matchID,
-		Board:     makeBoard(config.BoardWidth, config.BoardHeight),
-		Player1ID: playerID,
-		Status:    "waiting",
-		Config:    config,
-		StartTime: time.Now().UTC(),
+		MID:              matchID,
+		Board:            makeBoard(config.BoardWidth, config.BoardHeight),
+		Player1ID:        playerID,
+		Status:           "waiting",
+		Config:           config,
+		StartTime:        time.Now().UTC(),
+		FirstMovePlayerID: playerID,
 	}
 
 	dbMatch := &db.Match{
-		MID:         match.MID,
-		Player1ID:   playerID,
-		Status:      match.Status,
-		StartTime:   match.StartTime,
-		BoardWidth:  config.BoardWidth,
-		BoardHeight: config.BoardHeight,
-		WinLength:   config.WinLength,
+		MID:               match.MID,
+		Player1ID:         playerID,
+		Status:            match.Status,
+		StartTime:         match.StartTime,
+		BoardWidth:        config.BoardWidth,
+		BoardHeight:       config.BoardHeight,
+		WinLength:         config.WinLength,
+		FirstMovePlayerID: playerID,
 	}
 
 	if err := db.CreateMatch(dbMatch); err != nil {
@@ -100,17 +103,19 @@ func GetMatch(matchID int64) (*Match, error) {
 		}
 		// Convert db.Match to game.Match
 		match = &Match{
-			MID:       dbMatch.MID,
-			Player1ID: dbMatch.Player1ID,
-			Player2ID: dbMatch.Player2ID,
-			Status:    dbMatch.Status,
-			StartTime: dbMatch.StartTime,
+			MID:               dbMatch.MID,
+			Player1ID:         dbMatch.Player1ID,
+			Player2ID:         dbMatch.Player2ID,
+			Status:            dbMatch.Status,
+			StartTime:         dbMatch.StartTime,
+			FirstMovePlayerID: dbMatch.FirstMovePlayerID,
 			Config: MatchConfig{
 				BoardWidth:  dbMatch.BoardWidth,
 				BoardHeight: dbMatch.BoardHeight,
 				WinLength:   dbMatch.WinLength,
 			},
 			Board: makeBoard(dbMatch.BoardWidth, dbMatch.BoardHeight),
+			Moves: dbMatch.Moves,
 		}
 		matches[matchID] = match
 	}
@@ -134,20 +139,10 @@ func MakeMove(hub *websocket.Hub, matchID int64, playerID int64, x, y int) (map[
 		symbol = "O"
 	}
 	match.Board[y][x] = symbol
-	match.MoveCount++
 
-	// Store the move in the database
-	move := &db.Move{
-		MatchID:    matchID,
-		PlayerID:   playerID,
-		X:          x,
-		Y:          y,
-		MoveNumber: match.MoveCount,
-		Timestamp:  time.Now().UTC(),
-	}
-	if err := db.CreateMove(move); err != nil {
-		log.Printf("Failed to store move in database: %v", err)
-	}
+	// Add the move to the match's Moves slice
+	move := db.Move{X: x, Y: y}
+	match.Moves = append(match.Moves, move)
 
 	result := checkGameResult(match, x, y)
 
@@ -167,7 +162,7 @@ func MakeMove(hub *websocket.Hub, matchID int64, playerID int64, x, y int) (map[
 		endTime := time.Now()
 		winner := playerID
 		if result["result"] == "draw" {
-			winner = -1 // Use 0 or -1 to indicate a draw, depending on your preference
+			winner = -1 // Use -1 to indicate a draw
 		}
 		if err := updateMatchInDatabase(match, endTime, winner); err != nil {
 			log.Printf("Failed to update match in database: %v", err)
@@ -185,6 +180,7 @@ func updateMatchInDatabase(match *Match, endTime time.Time, winner int64) error 
 		Status:    match.Status,
 		EndTime:   endTime,
 		Winner:    winner,
+		Moves:     match.Moves,
 	}
 	return db.UpdateMatch(dbMatch)
 }
@@ -193,18 +189,8 @@ func GetMatchHistory(userID int64, limit int) ([]db.Match, error) {
 	return db.GetRecentMatchesByUser(userID, limit)
 }
 
-func GetMatchReplay(matchID int64) (*db.Match, []db.Move, error) {
-	match, err := db.GetMatchByID(matchID)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	moves, err := db.GetMovesByMatchID(matchID)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return match, moves, nil
+func GetMatchReplay(matchID int64) (*db.Match, error) {
+	return db.GetMatchByID(matchID)
 }
 
 func makeBoard(width, height int) [][]string {

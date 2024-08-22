@@ -10,7 +10,11 @@ next steps:
 -  Add documentation for API endpoints and WebSocket events
 -  Consider adding monitoring and analytics for the application
 
-CREATE TABLE users (
+-- Drop tables if they exist
+DROP TABLE IF EXISTS matches, users;
+
+-- Create users table
+CREATE TABLE IF NOT EXISTS users (
     uid BIGINT PRIMARY KEY,
     username VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
@@ -18,7 +22,8 @@ CREATE TABLE users (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE matches (
+-- Create matches table
+CREATE TABLE IF NOT EXISTS matches (
     id BIGINT PRIMARY KEY,
     player1_id BIGINT REFERENCES users(uid),
     player2_id BIGINT REFERENCES users(uid),
@@ -29,22 +34,6 @@ CREATE TABLE matches (
     board_width INTEGER,
     board_height INTEGER,
     win_length INTEGER,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    first_move_player_id BIGINT,
+    moves JSONB
 );
-
-CREATE TABLE moves (
-    id SERIAL PRIMARY KEY,
-    match_id BIGINT NOT NULL,
-    player_id BIGINT NOT NULL,
-    x INTEGER NOT NULL,
-    y INTEGER NOT NULL,
-    move_number INTEGER NOT NULL,
-    timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE,
-    FOREIGN KEY (player_id) REFERENCES users(uid)
-);
-
-DROP TABLE moves;
-DROP TABLE matches;
-DROP TABLE users;

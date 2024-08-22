@@ -163,14 +163,11 @@ func GetMatchReplayHandler(c *gin.Context) {
 		return
 	}
 
-	match, moves, err := game.GetMatchReplay(matchID)
+	replay, err := game.GetMatchReplay(matchID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve match replay"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"match": match,
-		"moves": moves,
-	})
+	c.JSON(http.StatusOK, replay)
 }

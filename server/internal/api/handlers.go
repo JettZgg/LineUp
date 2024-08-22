@@ -88,7 +88,8 @@ func JoinMatchHandler(c *gin.Context) {
 	uid := c.GetInt64("uid")
 
 	if err := game.JoinMatch(matchID, uid); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to join match"})
+		// Output the specific error message
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -107,7 +108,7 @@ func MakeMoveHandler(c *gin.Context) {
 		X int `json:"x"`
 		Y int `json:"y"`
 	}
-	if err := game.JoinMatch(matchID, uid); err != nil {
+	if err := c.ShouldBindJSON(&moveRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}

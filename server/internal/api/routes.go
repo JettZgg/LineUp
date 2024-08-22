@@ -23,6 +23,12 @@ func SetupRoutes(r *gin.Engine, hub *websocket.Hub) {
 		MaxAge:           12 * time.Hour,
 	}))
 
+	// Middleware to set hub in context
+	r.Use(func(c *gin.Context) {
+		c.Set("hub", hub)
+		c.Next()
+	})
+
 	// Public routes
 	r.POST("/api/register", RegisterHandler)
 	r.POST("/api/login", LoginHandler)
@@ -50,10 +56,5 @@ func SetupRoutes(r *gin.Engine, hub *websocket.Hub) {
 			return
 		}
 		websocket.ServeWs(hub, c.Writer, c.Request, matchID)
-	})
-
-	r.Use(func(c *gin.Context) {
-		c.Set("hub", hub)
-		c.Next()
 	})
 }

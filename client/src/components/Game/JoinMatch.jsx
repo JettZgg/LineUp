@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { joinMatch } from '../../services/api';
 import { useNavigate } from 'react-router-dom';
+import { TextField, Button, Box } from '@mui/material';
 
 const JoinMatch = () => {
     const [matchId, setMatchId] = useState('');
@@ -27,16 +28,19 @@ const JoinMatch = () => {
     };
 
     return (
-        <form onSubmit={handleSubmit}>
-            <input
-                type="text"
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', mt: 2 }}>
+            <TextField
                 value={matchId}
                 onChange={(e) => setMatchId(e.target.value)}
                 placeholder="Match ID"
                 required
+                sx={{ mb: 1 }}
+                fullWidth
             />
-            <button type="submit">Join Match</button>
-        </form>
+            <Button type="submit" variant="contained" color="primary">
+                Join Match
+            </Button>
+        </Box>
     );
 };
 

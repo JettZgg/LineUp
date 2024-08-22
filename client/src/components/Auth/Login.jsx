@@ -15,7 +15,7 @@ const Login = () => {
         e.preventDefault();
         try {
             const response = await loginApi(username, password);
-            login(response.data.token);
+            login(response.data); // Pass the entire user data
             navigate('/');
         } catch (error) {
             console.error('Login failed:', error);

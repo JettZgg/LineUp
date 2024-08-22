@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/JettZgg/LineUp/internal/db"
@@ -28,6 +29,23 @@ type Match struct {
 	StartTime        time.Time   `json:"startTime"`
 	FirstMovePlayerID int64       `json:"firstMovePlayerId"`
 	Moves            []db.Move   `json:"moves"`
+}
+
+func (m Match) MarshalJSON() ([]byte, error) {
+    type Alias Match
+    return json.Marshal(&struct {
+        MID string `json:"id"`
+        Player1ID string `json:"player1Id"`
+        Player2ID string `json:"player2Id"`
+        FirstMovePlayerID string `json:"firstMovePlayerId"`
+        Alias
+    }{
+        MID:   strconv.FormatInt(m.MID, 10),
+        Player1ID: strconv.FormatInt(m.Player1ID, 10),
+        Player2ID: strconv.FormatInt(m.Player2ID, 10),
+        FirstMovePlayerID: strconv.FormatInt(m.FirstMovePlayerID, 10),
+        Alias: Alias(m),
+    })
 }
 
 var matches = make(map[int64]*Match)
@@ -71,25 +89,34 @@ func JoinMatch(matchID int64, playerID int64) error {
 	if match.Status != "waiting" {
 		return errors.New("match is not available for joining")
 	}
-	if match.Player1ID == playerID {
-		return errors.New("you are already in this match")
+
+	// Check if the player is new to the match
+	isNewPlayer := match.Player1ID != playerID && match.Player2ID != playerID
+
+	if isNewPlayer {
+		if match.Player2ID == 0 {
+			match.Player2ID = playerID
+			match.Status = "ongoing"
+
+			// Update the match in the database only if a new player joined
+			dbMatch := &db.Match{
+				MID:       match.MID,
+				Player2ID: playerID,
+				Status:    match.Status,
+			}
+			if err := db.UpdateMatch(dbMatch); err != nil {
+				log.Printf("Error updating match in database: %v", err)
+				return fmt.Errorf("failed to update match in database: %w", err)
+			}
+
+			log.Printf("Player %d joined match %d", playerID, matchID)
+		} else {
+			return errors.New("match is full")
+		}
+	} else {
+		log.Printf("Player %d rejoined match %d", playerID, matchID)
 	}
 
-	match.Player2ID = playerID
-	match.Status = "ongoing"
-
-	// Update the match in the database
-	dbMatch := &db.Match{
-		MID:       match.MID,
-		Player2ID: playerID,
-		Status:    match.Status,
-	}
-	if err := db.UpdateMatch(dbMatch); err != nil {
-		log.Printf("Error updating match in database: %v", err)
-		return fmt.Errorf("failed to update match in database: %w", err)
-	}
-
-	log.Printf("Player %d joined match %d", playerID, matchID)
 	return nil
 }
 

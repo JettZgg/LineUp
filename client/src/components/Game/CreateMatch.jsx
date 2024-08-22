@@ -13,27 +13,33 @@ const CreateMatch = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            console.log('Sending create match request with:', { boardWidth, boardHeight, winLength });
             const response = await createMatch({ boardWidth, boardHeight, winLength });
+            console.log('Create match response:', response);
+
             if (response && response.data) {
-                const matchId = String(response.data.id || response.data.match?.id);
+                console.log('Response data:', response.data);
+                const matchId = response.data.id || (response.data.match && response.data.match.id);
+                console.log('Match ID:', matchId);
                 if (matchId) {
+                    console.log('Navigating to waiting room with id:', matchId);
                     navigate(`/match/${matchId}/waiting`);
                 } else {
-                    console.error('Invalid response from server: No match ID found', response);
+                    console.error('No match ID found in response:', response.data);
                 }
             } else {
                 console.error('Invalid response from server:', response);
             }
         } catch (error) {
             console.error('Failed to create match:', error);
+            if (error.response) {
+                console.error('Error response:', error.response.data);
+            }
         }
     };
 
     return (
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
-            <Typography variant="h5" gutterBottom>
-                Create New Match
-            </Typography>
             <TextField
                 margin="normal"
                 required

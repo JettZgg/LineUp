@@ -8,19 +8,16 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user && user.token) {
+        config.headers.Authorization = `Bearer ${user.token}`;
     }
     return config;
 });
 
 export const register = (username, password) => api.post('/register', { username, password });
 export const login = (username, password) => api.post('/login', { username, password });
-export const createMatch = (config) => api.post('/create-match', config).then(response => {
-    console.log('Create match response:', response);
-    return response;
-});
+export const createMatch = (config) => api.post('/create-match', config);
 export const joinMatch = (matchId) => api.post(`/join-match/${matchId}`);
 
 export default api;

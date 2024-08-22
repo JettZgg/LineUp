@@ -9,18 +9,26 @@ const WaitingRoom = () => {
     const { user } = useAuth();
     const [players, setPlayers] = useState([]);
     const [isReady, setIsReady] = useState(false);
-    const { sendMessage, lastMessage } = useWebSocket(String(matchId));
+    const [gameConfig, setGameConfig] = useState(null);
+    const { sendMessage, lastMessage } = useWebSocket(matchId);
 
     useEffect(() => {
         if (lastMessage) {
             const data = JSON.parse(lastMessage.data);
             if (data.type === 'playerJoined' || data.type === 'playerLeft') {
                 setPlayers(data.players);
+            } else if (data.type === 'gameConfig') {
+                setGameConfig(data.config);
             } else if (data.type === 'gameStart') {
                 // Navigate to the game board or update state to start the game
             }
         }
     }, [lastMessage]);
+
+    useEffect(() => {
+        // Request game configuration and player information when component mounts
+        sendMessage({ type: 'getGameInfo', matchId });
+    }, [matchId, sendMessage]);
 
     const handleReady = () => {
         setIsReady(true);
@@ -35,33 +43,20 @@ const WaitingRoom = () => {
         <Box sx={{ mt: 4 }}>
             <Typography variant="h4" gutterBottom>Waiting Room - Match {matchId}</Typography>
             <Grid container spacing={2}>
-                <Grid item xs={4}>
+                <Grid item xs={12}>
                     <Typography variant="h6">Players:</Typography>
-                    {players.map((player, index) => (
-                        <Typography key={index}>{player.username} {player.ready ? '(Ready)' : ''}</Typography>
-                    ))}
+                    <Typography>Player 1: {players[0]?.username || 'Waiting...'}</Typography>
+                    <Typography>Player 2: {players[1]?.username || 'Waiting...'}</Typography>
                 </Grid>
-                <Grid item xs={4}>
-                    <Box sx={{ width: '100%', height: '300px', bgcolor: 'grey.300' }}>
-                        {/* Placeholder for the board preview */}
-                        <Typography variant="h6" sx={{ textAlign: 'center', pt: 2 }}>Board Preview</Typography>
-                    </Box>
-                    {players.length === 2 && players.every(p => p.ready) && (
-                        <Button 
-                            variant="contained" 
-                            color="primary" 
-                            fullWidth 
-                            sx={{ mt: 2 }}
-                            onClick={handleStart}
-                        >
-                            Start Game
-                        </Button>
-                    )}
-                </Grid>
-                <Grid item xs={4}>
-                    <Typography variant="h6">
-                        {players.length < 2 ? 'Waiting for opponent...' : 'Opponent joined!'}
-                    </Typography>
+                {gameConfig && (
+                    <Grid item xs={12}>
+                        <Typography variant="h6">Game Configuration:</Typography>
+                        <Typography>Board Width: {gameConfig.boardWidth}</Typography>
+                        <Typography>Board Height: {gameConfig.boardHeight}</Typography>
+                        <Typography>Length to Win: {gameConfig.winLength}</Typography>
+                    </Grid>
+                )}
+                <Grid item xs={12}>
                     {!isReady && (
                         <Button 
                             variant="contained" 
@@ -71,6 +66,17 @@ const WaitingRoom = () => {
                             onClick={handleReady}
                         >
                             Ready
+                        </Button>
+                    )}
+                    {players.length === 2 && players.every(p => p.ready) && (
+                        <Button 
+                            variant="contained" 
+                            color="primary" 
+                            fullWidth 
+                            sx={{ mt: 2 }}
+                            onClick={handleStart}
+                        >
+                            Start Game
                         </Button>
                     )}
                 </Grid>

@@ -23,8 +23,8 @@ const App = () => {
       <AuthProvider>
         <Router>
           <Header />
-          <Container maxWidth="md">
-            <Box sx={{ mt: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <Container maxWidth="md" sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', minHeight: '100vh', pt: 4 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />

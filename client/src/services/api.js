@@ -17,7 +17,10 @@ api.interceptors.request.use((config) => {
 
 export const register = (username, password) => api.post('/register', { username, password });
 export const login = (username, password) => api.post('/login', { username, password });
-export const createMatch = (config) => api.post('/create-match', config);
+export const createMatch = (config) => api.post('/create-match', config).then(response => {
+    console.log('Create match response:', response);
+    return response;
+});
 export const joinMatch = (matchId) => api.post(`/join-match/${matchId}`);
 
 export default api;

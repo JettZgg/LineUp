@@ -1,40 +1,30 @@
 // src/services/websocket.js
-import { useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 const WS_URL = 'ws://localhost:8080/ws'; // Update with your WebSocket server URL
 
 export const useWebSocket = (matchId) => {
-    const socket = useRef(null);
+    const [socket, setSocket] = useState(null);
+    const [lastMessage, setLastMessage] = useState(null);
 
     useEffect(() => {
-        // Create WebSocket connection
-        socket.current = new WebSocket(`${WS_URL}/${matchId}`);
+        const ws = new WebSocket(`${WS_URL}/${matchId}`);
+        setSocket(ws);
 
-        socket.current.onopen = () => {
-            console.log('WebSocket Connected');
-        };
-
-        socket.current.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            // Handle incoming messages
-            console.log('Received:', data);
-            // You'll want to update your game state here
-        };
-
-        socket.current.onclose = () => {
-            console.log('WebSocket Disconnected');
+        ws.onmessage = (event) => {
+            setLastMessage(event);
         };
 
         return () => {
-            socket.current.close();
+            ws.close();
         };
     }, [matchId]);
 
-    const sendMessage = (message) => {
-        if (socket.current.readyState === WebSocket.OPEN) {
-            socket.current.send(JSON.stringify(message));
+    const sendMessage = useCallback((message) => {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify(message));
         }
-    };
+    }, [socket]);
 
-    return { sendMessage };
+    return { sendMessage, lastMessage };
 };

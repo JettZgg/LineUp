@@ -10,10 +10,19 @@ const JoinMatch = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await joinMatch(matchId);
-            navigate(`/match/${matchId}`);
+            console.log('Attempting to join match:', matchId);
+            const response = await joinMatch(matchId);
+            console.log('Join match response:', response);
+            if (response && response.data) {
+                navigate(`/match/${matchId}/waiting`);
+            } else {
+                console.error('Invalid response from server:', response);
+            }
         } catch (error) {
             console.error('Failed to join match:', error);
+            if (error.response) {
+                console.error('Error response:', error.response.data);
+            }
         }
     };
 

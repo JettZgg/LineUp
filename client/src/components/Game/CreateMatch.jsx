@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { createMatch } from '../../services/api';
 import { useNavigate } from 'react-router-dom';
+import { TextField, Button, Typography, Box } from '@mui/material';
 
 const CreateMatch = () => {
     const [boardWidth, setBoardWidth] = useState(10);
@@ -13,43 +14,68 @@ const CreateMatch = () => {
         e.preventDefault();
         try {
             const response = await createMatch({ boardWidth, boardHeight, winLength });
-            navigate(`/match/${response.data.id}`);
+            if (response && response.data) {
+                const matchId = String(response.data.id || response.data.match?.id);
+                if (matchId) {
+                    navigate(`/match/${matchId}/waiting`);
+                } else {
+                    console.error('Invalid response from server: No match ID found', response);
+                }
+            } else {
+                console.error('Invalid response from server:', response);
+            }
         } catch (error) {
             console.error('Failed to create match:', error);
         }
     };
 
     return (
-        <form onSubmit={handleSubmit}>
-            <input
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
+            <Typography variant="h5" gutterBottom>
+                Create New Match
+            </Typography>
+            <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="boardWidth"
+                label="Board Width"
                 type="number"
                 value={boardWidth}
                 onChange={(e) => setBoardWidth(parseInt(e.target.value))}
-                placeholder="Board Width"
-                min="3"
-                max="99"
-                required
+                inputProps={{ min: "3", max: "99" }}
             />
-            <input
+            <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="boardHeight"
+                label="Board Height"
                 type="number"
                 value={boardHeight}
                 onChange={(e) => setBoardHeight(parseInt(e.target.value))}
-                placeholder="Board Height"
-                min="3"
-                max="99"
-                required
+                inputProps={{ min: "3", max: "99" }}
             />
-            <input
+            <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="winLength"
+                label="Win Length"
                 type="number"
                 value={winLength}
                 onChange={(e) => setWinLength(parseInt(e.target.value))}
-                placeholder="Win Length"
-                min="3"
-                max="19"
-                required
+                inputProps={{ min: "3", max: "19" }}
             />
-            <button type="submit">Create Match</button>
-        </form>
+            <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                sx={{ mt: 3, mb: 2 }}
+            >
+                Create Match
+            </Button>
+        </Box>
     );
 };
 

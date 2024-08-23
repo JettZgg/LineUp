@@ -1,9 +1,62 @@
-// src/components/Auth/Login.jsx
 import React, { useState } from 'react';
 import { login as loginApi } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { TextField, Button, Typography, Box } from '@mui/material';
+import { styled } from '@mui/material/styles';
+
+const StyledBox = styled(Box)({
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '100vh',
+    width: '100vw',
+    backgroundColor: '#BF9D9D',
+});
+
+const StyledForm = styled(Box)({
+    backgroundColor: '#DCC2C2',
+    padding: '2rem',
+    borderRadius: '8px',
+    width: '300px',
+    border: '1px solid #1E1E1E',
+    boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
+});
+
+const StyledButton = styled(Button)({
+    backgroundColor: '#65558F',
+    color: '#F5F5F5',
+    border: '1px solid #1E1E1E',
+    '&:hover': {
+        backgroundColor: '#5048C5',
+    },
+});
+
+const StyledTextField = styled(TextField)({
+    marginBottom: '1rem',
+    '& .MuiInputBase-input': {
+        color: '#1E1E1E',
+    },
+    '& .MuiInputLabel-root': {
+        color: '#1E1E1E',
+    },
+    '& .MuiOutlinedInput-root': {
+        '& fieldset': {
+            borderColor: '#1E1E1E',
+        },
+        '&:hover fieldset': {
+            borderColor: '#1E1E1E',
+        },
+        '&.Mui-focused fieldset': {
+            borderColor: '#1E1E1E',
+        },
+    },
+    '& .MuiInputBase-input:-webkit-autofill': {
+        '-webkit-box-shadow': '0 0 0 100px #DCC2C2 inset',
+        '-webkit-text-fill-color': '#1E1E1E',
+    },
+});
 
 const Login = () => {
     const [username, setUsername] = useState('');
@@ -27,43 +80,59 @@ const Login = () => {
     };
 
     return (
-        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
-            <Typography variant="h4" gutterBottom>
-                Login
+        <StyledBox>
+            <Typography variant="h4" gutterBottom align="center" sx={{ fontFamily: 'Explora, cursive', fontSize: '6rem', color: '#1E1E1E', marginBottom: '2rem', fontWeight: 400 }}>
+                LineUp
             </Typography>
-            <TextField
-                margin="normal"
-                required
-                fullWidth
-                id="username"
-                label="Username"
-                name="username"
-                autoComplete="username"
-                autoFocus
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-            />
-            <TextField
-                margin="normal"
-                required
-                fullWidth
-                name="password"
-                label="Password"
-                type="password"
-                id="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-            />
-            <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                sx={{ mt: 3, mb: 2 }}
-            >
-                Login
-            </Button>
-        </Box>
+            <StyledForm component="form" onSubmit={handleSubmit}>
+                <StyledTextField
+                    fullWidth
+                    id="username"
+                    label="Username"
+                    name="username"
+                    autoComplete="username"
+                    autoFocus
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    InputProps={{
+                        style: { fontFamily: 'Lora, serif', fontWeight: 600 }
+                    }}
+                    InputLabelProps={{
+                        style: { fontFamily: 'Lora, serif', fontWeight: 600 }
+                    }}
+                />
+                <StyledTextField
+                    fullWidth
+                    name="password"
+                    label="Password"
+                    type="password"
+                    id="password"
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    InputProps={{
+                        style: { fontFamily: 'Lora, serif', fontWeight: 600 }
+                    }}
+                    InputLabelProps={{
+                        style: { fontFamily: 'Lora, serif', fontWeight: 600 }
+                    }}
+                />
+                <StyledButton
+                    type="submit"
+                    fullWidth
+                    variant="contained"
+                    sx={{ mt: '1rem', mb: 2, fontFamily: 'Lora, serif', fontWeight: 600 }}
+                >
+                    Sign In
+                </StyledButton>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'Lora, serif', fontWeight: 600, color: '#1E1E1E' }}>
+                    <Typography variant="body2" sx={{ fontFamily: 'Lora, serif', fontWeight: 600 }}>Forgot password?</Typography>
+                    <Typography variant="body2" component="a" href="/register" sx={{ textDecoration: 'none', color: '#1E1E1E', fontFamily: 'Lora, serif', fontWeight: 600 }}>
+                        Register
+                    </Typography>
+                </Box>
+            </StyledForm>
+        </StyledBox>
     );
 };
 

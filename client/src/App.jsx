@@ -6,7 +6,6 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
-import Header from './components/common/Header';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import Home from './components/Home';
@@ -14,7 +13,16 @@ import GameBoard from './components/Game/GameBoard';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import WaitingRoom from './components/Game/WaitingRoom';
 
-const theme = createTheme();
+const theme = createTheme({
+  typography: {
+    fontFamily: 'Lora, serif',
+    fontWeightRegular: 600,
+    h4: {
+      fontFamily: 'Explora, cursive',
+      fontWeight: 400,
+    },
+  },
+});
 
 const App = () => {
   return (
@@ -22,18 +30,15 @@ const App = () => {
       <CssBaseline />
       <AuthProvider>
         <Router>
-          <Header />
-          <Container maxWidth="md" sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', minHeight: '100vh', pt: 4 }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-                <Route path="/match/:matchId/waiting" element={<ProtectedRoute><WaitingRoom /></ProtectedRoute>} />
-                <Route path="/match/:matchId" element={<ProtectedRoute><GameBoard /></ProtectedRoute>} />
-              </Routes>
-            </Box>
-          </Container>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+              <Route path="/match/:matchId/waiting" element={<ProtectedRoute><WaitingRoom /></ProtectedRoute>} />
+              <Route path="/match/:matchId" element={<ProtectedRoute><GameBoard /></ProtectedRoute>} />
+            </Routes>
+          </Box>
         </Router>
       </AuthProvider>
     </ThemeProvider>

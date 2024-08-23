@@ -10,7 +10,6 @@ import (
 
 	"github.com/JettZgg/LineUp/internal/db"
 	"github.com/JettZgg/LineUp/internal/utils"
-	"github.com/JettZgg/LineUp/internal/utils/websocket"
 )
 
 type MatchConfig struct {
@@ -20,32 +19,32 @@ type MatchConfig struct {
 }
 
 type Match struct {
-	MID              int64       `json:"id"`
-	Board            [][]string  `json:"board"`
-	Player1ID        int64       `json:"player1Id"`
-	Player2ID        int64       `json:"player2Id"`
-	Status           string      `json:"status"`
-	Config           MatchConfig `json:"config"`
-	StartTime        time.Time   `json:"startTime"`
+	MID               int64       `json:"id"`
+	Board             [][]string  `json:"board"`
+	Player1ID         int64       `json:"player1Id"`
+	Player2ID         int64       `json:"player2Id"`
+	Status            string      `json:"status"`
+	Config            MatchConfig `json:"config"`
+	StartTime         time.Time   `json:"startTime"`
 	FirstMovePlayerID int64       `json:"firstMovePlayerId"`
-	Moves            []db.Move   `json:"moves"`
+	Moves             []db.Move   `json:"moves"`
 }
 
 func (m Match) MarshalJSON() ([]byte, error) {
-    type Alias Match
-    return json.Marshal(&struct {
-        MID string `json:"id"`
-        Player1ID string `json:"player1Id"`
-        Player2ID string `json:"player2Id"`
-        FirstMovePlayerID string `json:"firstMovePlayerId"`
-        Alias
-    }{
-        MID:   strconv.FormatInt(m.MID, 10),
-        Player1ID: strconv.FormatInt(m.Player1ID, 10),
-        Player2ID: strconv.FormatInt(m.Player2ID, 10),
-        FirstMovePlayerID: strconv.FormatInt(m.FirstMovePlayerID, 10),
-        Alias: Alias(m),
-    })
+	type Alias Match
+	return json.Marshal(&struct {
+		MID               string `json:"id"`
+		Player1ID         string `json:"player1Id"`
+		Player2ID         string `json:"player2Id"`
+		FirstMovePlayerID string `json:"firstMovePlayerId"`
+		Alias
+	}{
+		MID:               strconv.FormatInt(m.MID, 10),
+		Player1ID:         strconv.FormatInt(m.Player1ID, 10),
+		Player2ID:         strconv.FormatInt(m.Player2ID, 10),
+		FirstMovePlayerID: strconv.FormatInt(m.FirstMovePlayerID, 10),
+		Alias:             Alias(m),
+	})
 }
 
 var matches = make(map[int64]*Match)
@@ -53,12 +52,12 @@ var matches = make(map[int64]*Match)
 func CreateMatch(config MatchConfig, playerID int64) (*Match, error) {
 	matchID := utils.GenerateMID()
 	match := &Match{
-		MID:              matchID,
-		Board:            makeBoard(config.BoardWidth, config.BoardHeight),
-		Player1ID:        playerID,
-		Status:           "waiting",
-		Config:           config,
-		StartTime:        time.Now().UTC(),
+		MID:               matchID,
+		Board:             makeBoard(config.BoardWidth, config.BoardHeight),
+		Player1ID:         playerID,
+		Status:            "waiting",
+		Config:            config,
+		StartTime:         time.Now().UTC(),
 		FirstMovePlayerID: playerID,
 	}
 
@@ -81,7 +80,7 @@ func CreateMatch(config MatchConfig, playerID int64) (*Match, error) {
 	return match, nil
 }
 
-func JoinMatch(matchID int64, playerID int64) error {
+func JoinMatch(broadcastFunc func(int64, []byte), matchID int64, playerID int64) error {
 	match, exists := matches[matchID]
 	if !exists {
 		return errors.New("match not found")
@@ -117,6 +116,21 @@ func JoinMatch(matchID int64, playerID int64) error {
 		log.Printf("Player %d rejoined match %d", playerID, matchID)
 	}
 
+	// Broadcast updated player information
+	players := []map[string]interface{}{
+		{"id": match.Player1ID, "username": getUsername(match.Player1ID)},
+	}
+	if match.Player2ID != 0 {
+		players = append(players, map[string]interface{}{"id": match.Player2ID, "username": getUsername(match.Player2ID)})
+	}
+	updateMsg := map[string]interface{}{
+		"type":    "playerJoined",
+		"matchId": matchID,
+		"players": players,
+	}
+	msgBytes, _ := json.Marshal(updateMsg)
+	broadcastFunc(matchID, msgBytes)
+
 	return nil
 }
 
@@ -149,7 +163,7 @@ func GetMatch(matchID int64) (*Match, error) {
 	return match, nil
 }
 
-func MakeMove(hub *websocket.Hub, matchID int64, playerID int64, x, y int) (map[string]interface{}, error) {
+func MakeMove(broadcastFunc func(int64, []byte), matchID int64, playerID int64, x, y int) (map[string]interface{}, error) {
 	match, err := GetMatch(matchID)
 	if err != nil {
 		return nil, err
@@ -182,7 +196,7 @@ func MakeMove(hub *websocket.Hub, matchID int64, playerID int64, x, y int) (map[
 	}
 
 	msgBytes, _ := json.Marshal(updateMsg)
-	hub.BroadcastToMatch(matchID, msgBytes)
+	broadcastFunc(matchID, msgBytes)
 
 	if result["result"] != "ongoing" {
 		match.Status = "finished"
@@ -274,4 +288,13 @@ func checkGameResult(match *Match, x, y int) map[string]interface{} {
 		return map[string]interface{}{"result": "draw"}
 	}
 	return map[string]interface{}{"result": "ongoing"}
+}
+
+func getUsername(userID int64) string {
+	user, err := db.GetUserByID(userID)
+	if err != nil {
+		log.Printf("Error getting username for user %d: %v", userID, err)
+		return "Unknown"
+	}
+	return user.Username
 }

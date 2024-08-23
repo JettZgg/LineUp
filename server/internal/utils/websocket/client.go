@@ -2,9 +2,11 @@
 package websocket
 
 import (
+	"encoding/json"
 	"log"
 	"time"
 
+	"github.com/JettZgg/LineUp/internal/game"
 	"github.com/gorilla/websocket"
 )
 
@@ -34,23 +36,38 @@ type Client struct {
 }
 
 func (c *Client) readPump() {
-	defer func() {
-		c.hub.unregister <- c
-		c.conn.Close()
-	}()
-	c.conn.SetReadLimit(maxMessageSize)
-	c.conn.SetReadDeadline(time.Now().Add(pongWait))
-	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-	for {
-		_, message, err := c.conn.ReadMessage()
-		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("error: %v", err)
-			}
-			break
-		}
-		c.hub.broadcast <- message
-	}
+    defer func() {
+        c.hub.unregister <- c
+        c.conn.Close()
+    }()
+    c.conn.SetReadLimit(maxMessageSize)
+    c.conn.SetReadDeadline(time.Now().Add(pongWait))
+    c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+    for {
+        _, message, err := c.conn.ReadMessage()
+        if err != nil {
+            if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+                log.Printf("error: %v", err)
+            }
+            break
+        }
+        var msg map[string]interface{}
+        if err := json.Unmarshal(message, &msg); err != nil {
+            log.Printf("error unmarshaling message: %v", err)
+            continue
+        }
+        if msg["type"] == "getGameInfo" {
+            matchID := int64(msg["matchId"].(float64))
+            gameInfo, err := game.GetGameInfo(matchID)
+            if err != nil {
+                log.Printf("Error getting game info: %v", err)
+                continue
+            }
+            response, _ := json.Marshal(gameInfo)
+            c.send <- response
+        }
+        // Handle other message types here
+    }
 }
 
 func (c *Client) writePump() {

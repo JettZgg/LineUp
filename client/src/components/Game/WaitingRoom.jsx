@@ -15,10 +15,11 @@ const WaitingRoom = () => {
     useEffect(() => {
         if (lastMessage) {
             const data = JSON.parse(lastMessage.data);
-            if (data.type === 'playerJoined' || data.type === 'playerLeft') {
+            if (data.type === 'gameInfo') {
                 setPlayers(data.players);
-            } else if (data.type === 'gameConfig') {
                 setGameConfig(data.config);
+            } else if (data.type === 'playerJoined' || data.type === 'playerLeft') {
+                setPlayers(data.players);
             } else if (data.type === 'gameStart') {
                 // Navigate to the game board or update state to start the game
             }
@@ -45,7 +46,7 @@ const WaitingRoom = () => {
             <Grid container spacing={2}>
                 <Grid item xs={12}>
                     <Typography variant="h6">Players:</Typography>
-                    <Typography>Player 1: {players[0]?.username || 'Waiting...'}</Typography>
+                    <Typography>Player 1: {players[0]?.username || user.username}</Typography>
                     <Typography>Player 2: {players[1]?.username || 'Waiting...'}</Typography>
                 </Grid>
                 {gameConfig && (

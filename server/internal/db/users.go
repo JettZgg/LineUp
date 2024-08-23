@@ -4,6 +4,8 @@ package db
 
 import (
 	"time"
+	"database/sql"
+	"errors"
 )
 
 type User struct {
@@ -28,4 +30,16 @@ func GetUserByUsername(username string) (*User, error) {
 		return nil, err
 	}
 	return user, nil
+}
+
+func GetUserByID(userID int64) (*User, error) {
+	var user User
+	err := DB.QueryRow("SELECT uid, username FROM users WHERE uid = $1", userID).Scan(&user.UID, &user.Username)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.New("user not found")
+		}
+		return nil, err
+	}
+	return &user, nil
 }

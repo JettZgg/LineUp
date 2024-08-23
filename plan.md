@@ -1,14 +1,6 @@
 next steps:
--  Fix "Join match" and "get match"
--  Add comprehensive input validation for all API endpoints
--  Implement detailed logging throughout the application
--  Set up unit tests for core functionalities (game logic, auth, API handlers)
--  Create a basic client-side interface for testing the game
+-  Fix waiting room and match board
 -  Set up a CI/CD pipeline for automated testing and deployment
--  Optimize database queries and add indexing if needed
--  Implement rate limiting and additional security measures
--  Add documentation for API endpoints and WebSocket events
--  Consider adding monitoring and analytics for the application
 
 -- Drop tables if they exist
 DROP TABLE IF EXISTS matches, users;

@@ -87,8 +87,12 @@ func JoinMatchHandler(c *gin.Context) {
 	}
 	uid := c.GetInt64("uid")
 
-	if err := game.JoinMatch(matchID, uid); err != nil {
-		// Output the specific error message
+	hub := c.MustGet("hub").(*websocket.Hub)
+	broadcastFunc := func(matchID int64, message []byte) {
+		hub.BroadcastToMatch(matchID, message)
+	}
+
+	if err := game.JoinMatch(broadcastFunc, matchID, uid); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -113,10 +117,12 @@ func MakeMoveHandler(c *gin.Context) {
 		return
 	}
 
-	// Get the hub from the context or wherever it's stored
 	hub := c.MustGet("hub").(*websocket.Hub)
+	broadcastFunc := func(matchID int64, message []byte) {
+		hub.BroadcastToMatch(matchID, message)
+	}
 
-	result, err := game.MakeMove(hub, matchID, uid, moveRequest.X, moveRequest.Y)
+	result, err := game.MakeMove(broadcastFunc, matchID, uid, moveRequest.X, moveRequest.Y)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid move"})
 		return

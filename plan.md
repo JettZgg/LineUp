@@ -1,5 +1,8 @@
 next steps:
--  Fix waiting room and match board
+-  can create a match but cannot get the right match id
+-  the rect does get ticked when clicked the ready button
+-  join match
+-  upgrade the waiting room page
 -  Set up a CI/CD pipeline for automated testing and deployment
 
 -- Drop tables if they exist

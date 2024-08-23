@@ -3,6 +3,7 @@ import { Typography, Box, Button } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { createMatch } from '../services/api';
 
 const StyledBox = styled(Box)({
     display: 'flex',
@@ -40,8 +41,17 @@ const Home = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
 
-    const handlePlay = () => {
-        navigate('/match/new/waiting');
+    const handlePlay = async () => {
+        try {
+            const response = await createMatch();
+            if (response && response.data) {
+                navigate(`/match/${response.data.id}/waiting`);
+            } else {
+                console.error('Invalid response from server:', response);
+            }
+        } catch (error) {
+            console.error('Failed to create match:', error);
+        }
     };
 
     const handleLogout = () => {

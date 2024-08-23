@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -98,4 +99,12 @@ func GetRecentMatchesByUser(userID int64, limit int) ([]Match, error) {
 		matches = append(matches, match)
 	}
 	return matches, nil
+}
+
+func DeleteMatch(matchID int64) error {
+    _, err := DB.Exec("DELETE FROM matches WHERE id = $1", matchID)
+    if err != nil {
+        return fmt.Errorf("failed to delete match: %w", err)
+    }
+    return nil
 }

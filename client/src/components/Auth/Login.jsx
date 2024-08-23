@@ -34,13 +34,6 @@ const StyledButton = styled(Button)({
 });
 
 const StyledTextField = styled(TextField)({
-    marginBottom: '1rem',
-    '& .MuiInputBase-input': {
-        color: '#1E1E1E',
-    },
-    '& .MuiInputLabel-root': {
-        color: '#1E1E1E',
-    },
     '& .MuiOutlinedInput-root': {
         '& fieldset': {
             borderColor: '#1E1E1E',
@@ -52,10 +45,14 @@ const StyledTextField = styled(TextField)({
             borderColor: '#1E1E1E',
         },
     },
-    '& .MuiInputBase-input:-webkit-autofill': {
-        '-webkit-box-shadow': '0 0 0 100px #DCC2C2 inset',
-        '-webkit-text-fill-color': '#1E1E1E',
+    '& .MuiInputBase-input': {
+        color: '#1E1E1E',
     },
+    '& input:-webkit-autofill': {
+        WebkitBoxShadow: '0 0 0 1000px #DCC2C2 inset',
+        WebkitTextFillColor: '#1E1E1E',
+    },
+    marginBottom: '10px',
 });
 
 const Login = () => {

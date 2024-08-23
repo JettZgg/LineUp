@@ -116,19 +116,14 @@ func JoinMatch(broadcastFunc func(int64, []byte), matchID int64, playerID int64)
 		log.Printf("Player %d rejoined match %d", playerID, matchID)
 	}
 
-	// Broadcast updated player information
-	players := []map[string]interface{}{
-		{"id": match.Player1ID, "username": getUsername(match.Player1ID)},
+	// Get game information
+	gameInfo, err := GetGameInfo(matchID)
+	if err != nil {
+		return fmt.Errorf("failed to get game info: %w", err)
 	}
-	if match.Player2ID != 0 {
-		players = append(players, map[string]interface{}{"id": match.Player2ID, "username": getUsername(match.Player2ID)})
-	}
-	updateMsg := map[string]interface{}{
-		"type":    "playerJoined",
-		"matchId": matchID,
-		"players": players,
-	}
-	msgBytes, _ := json.Marshal(updateMsg)
+
+	// Broadcast game information to all players
+	msgBytes, _ := json.Marshal(gameInfo)
 	broadcastFunc(matchID, msgBytes)
 
 	return nil
@@ -288,13 +283,4 @@ func checkGameResult(match *Match, x, y int) map[string]interface{} {
 		return map[string]interface{}{"result": "draw"}
 	}
 	return map[string]interface{}{"result": "ongoing"}
-}
-
-func getUsername(userID int64) string {
-	user, err := db.GetUserByID(userID)
-	if err != nil {
-		log.Printf("Error getting username for user %d: %v", userID, err)
-		return "Unknown"
-	}
-	return user.Username
 }

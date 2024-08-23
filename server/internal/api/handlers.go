@@ -30,27 +30,24 @@ func RegisterHandler(c *gin.Context) {
 }
 
 func LoginHandler(c *gin.Context) {
-	var credentials struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-	}
-	if err := c.ShouldBindJSON(&credentials); err != nil {
-		log.Printf("Error binding JSON: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
-		return
-	}
+    var credentials struct {
+        Username string `json:"username"`
+        Password string `json:"password"`
+    }
+    if err := c.ShouldBindJSON(&credentials); err != nil {
+        log.Printf("Error binding JSON: %v", err)
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+        return
+    }
 
-	user, token, err := auth.LoginUser(credentials.Username, credentials.Password)
-	if err != nil {
-		log.Printf("Login error for user %s: %v", credentials.Username, err)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
-		return
-	}
+    user, token, err := auth.LoginUser(credentials.Username, credentials.Password)
+    if err != nil {
+        log.Printf("Login error for user %s: %v", credentials.Username, err)
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+        return
+    }
 
-	// Set the user UID in the context
-	c.Set("userID", user.UID)
-
-	c.JSON(http.StatusOK, gin.H{"token": token, "userID": user.UID})
+    c.JSON(http.StatusOK, gin.H{"token": token, "userID": user.UID, "username": user.Username})
 }
 
 func CreateMatchHandler(c *gin.Context) {

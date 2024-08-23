@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Typography, Button, Grid } from '@mui/material';
 import { useWebSocket } from '../../services/websocket';
 import { useAuth } from '../../contexts/AuthContext';
@@ -7,6 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 const WaitingRoom = () => {
     const { matchId } = useParams();
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [players, setPlayers] = useState([]);
     const [isReady, setIsReady] = useState(false);
     const [gameConfig, setGameConfig] = useState(null);
@@ -15,29 +16,29 @@ const WaitingRoom = () => {
     useEffect(() => {
         if (lastMessage) {
             const data = JSON.parse(lastMessage.data);
+            console.log("Received WebSocket message:", data);
             if (data.type === 'gameInfo') {
                 setPlayers(data.players);
                 setGameConfig(data.config);
             } else if (data.type === 'playerJoined' || data.type === 'playerLeft') {
                 setPlayers(data.players);
             } else if (data.type === 'gameStart') {
-                // Navigate to the game board or update state to start the game
+                navigate(`/match/${matchId}`);
             }
         }
-    }, [lastMessage]);
+    }, [lastMessage, matchId, navigate]);
 
     useEffect(() => {
-        // Request game configuration and player information when component mounts
-        sendMessage({ type: 'getGameInfo', matchId });
-    }, [matchId, sendMessage]);
+        sendMessage({ type: 'joinMatch', matchId, token: user.token });
+    }, [matchId, sendMessage, user.token]);
 
     const handleReady = () => {
         setIsReady(true);
-        sendMessage({ type: 'playerReady', matchId, playerId: user.id });
+        sendMessage({ type: 'playerReady', matchId, token: user.token });
     };
 
     const handleStart = () => {
-        sendMessage({ type: 'startGame', matchId });
+        sendMessage({ type: 'startGame', matchId, token: user.token });
     };
 
     return (

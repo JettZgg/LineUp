@@ -42,9 +42,11 @@ func LoginUser(username, password string) (*db.User, string, error) {
 		return nil, "", errors.New("invalid credentials")
 	}
 
+	// Include username in the token claims
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"uid": user.UID,
-		"exp": time.Now().Add(24 * time.Hour).Unix(),
+		"uid":      user.UID,
+		"username": user.Username,
+		"exp":      time.Now().Add(24 * time.Hour).Unix(),
 	})
 
 	tokenString, err := token.SignedString(jwtKey)
@@ -66,6 +68,10 @@ func ValidateToken(tokenString string) (jwt.MapClaims, error) {
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		// Ensure the username is present in the claims
+		if _, ok := claims["username"]; !ok {
+			return nil, errors.New("username not found in token")
+		}
 		return claims, nil
 	}
 

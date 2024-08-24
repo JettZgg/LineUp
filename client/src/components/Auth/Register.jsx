@@ -50,6 +50,12 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
     '& .MuiInputBase-input': {
         color: '#1E1E1E',
     },
+    '& .MuiInputLabel-root': {
+        color: '#65558F',
+    },
+    '& .MuiInputLabel-root.Mui-focused': {
+        color: '#65558F',
+    },
     '& input:-webkit-autofill': {
         WebkitBoxShadow: '0 0 0 1000px #DCC2C2 inset',
         WebkitTextFillColor: '#1E1E1E',

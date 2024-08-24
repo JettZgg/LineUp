@@ -29,6 +29,12 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
         color: '#1E1E1E',
         fontFamily: theme.typography.fontFamily,
     },
+    '& .MuiInputLabel-root': {
+        color: '#65558F',
+    },
+    '& .MuiInputLabel-root.Mui-focused': {
+        color: '#65558F',
+    },
 }));
 
 const StyledButton = styled(Button)(({ theme }) => ({

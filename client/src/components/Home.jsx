@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { createMatch } from '../services/api';
 import { useTheme } from '@mui/material/styles';
-import JoinMatchModal from './Game/JoinMatchModal'; // Added this import
+import JoinMatchModal from './Game/JoinMatchModal';
 
 const StyledBox = styled(Box)(({ theme }) => ({
     display: 'flex',

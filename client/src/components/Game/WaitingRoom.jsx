@@ -24,11 +24,11 @@ const StyledButton = styled(Button)(({ theme }) => ({
     color: '#1E1E1E',
     border: '1px solid #1E1E1E',
     borderRadius: '8px',
-    padding: '10px 20px',
+    padding: '3px 20px',
     margin: '10px 0',
     width: '200px',
     fontFamily: theme.typography.fontFamily,
-    fontSize: '1.2rem',
+    fontSize: '1.4rem',
     '&:hover': {
         backgroundColor: '#C2B0B0',
     },
@@ -44,6 +44,8 @@ const StyledButton = styled(Button)(({ theme }) => ({
 
 const StyledTextField = styled(TextField)(({ theme }) => ({
     '& .MuiOutlinedInput-root': {
+        backgroundColor: '#F5F5F5',
+        borderRadius: '20px',
         '& fieldset': {
             borderColor: '#1E1E1E',
         },
@@ -57,8 +59,9 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
     '& .MuiInputBase-input': {
         color: '#1E1E1E',
         fontFamily: theme.typography.fontFamily,
+        padding: '10px 14px',
     },
-    marginBottom: '10px',
+    width: '200px',
 }));
 
 const WaitingRoom = () => {
@@ -139,51 +142,64 @@ const WaitingRoom = () => {
                 <Typography variant="body1" sx={{ fontWeight: 600, marginRight: '0.5rem' }}>
                     Match ID: {matchId}
                 </Typography>
-                <IconButton onClick={handleCopyMatchId}>
+                <IconButton
+                    onClick={handleCopyMatchId}
+                    sx={{
+                        '&:focus': {
+                            outline: 'none',
+                        },
+                    }}
+                >
                     <ContentCopyIcon />
                 </IconButton>
             </Box>
             <Typography variant="h5" sx={{ fontWeight: 600, marginBottom: '1rem' }}>
                 Board Settings
             </Typography>
-            <StyledTextField
-                label="Width"
-                type="number"
-                name="boardWidth"
-                value={gameConfig.boardWidth}
-                onChange={handleConfigChange}
-                inputProps={{ min: 3, max: 99 }}
-            />
-            <StyledTextField
-                label="Height"
-                type="number"
-                name="boardHeight"
-                value={gameConfig.boardHeight}
-                onChange={handleConfigChange}
-                inputProps={{ min: 3, max: 99 }}
-            />
-            <StyledTextField
-                label="Length To Win"
-                type="number"
-                name="winLength"
-                value={gameConfig.winLength}
-                onChange={handleConfigChange}
-                inputProps={{ min: 3, max: 19 }}
-            />
+            <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+                <Typography variant="body1" sx={{ width: '150px', textAlign: 'right', marginRight: '1rem' }}>Width:</Typography>
+                <StyledTextField
+                    type="number"
+                    name="boardWidth"
+                    value={gameConfig.boardWidth}
+                    onChange={handleConfigChange}
+                    inputProps={{ min: 3, max: 99 }}
+                />
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+                <Typography variant="body1" sx={{ width: '150px', textAlign: 'right', marginRight: '1rem' }}>Height:</Typography>
+                <StyledTextField
+                    type="number"
+                    name="boardHeight"
+                    value={gameConfig.boardHeight}
+                    onChange={handleConfigChange}
+                    inputProps={{ min: 3, max: 99 }}
+                />
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+                <Typography variant="body1" sx={{ width: '150px', textAlign: 'right', marginRight: '1rem' }}>Length To Win:</Typography>
+                <StyledTextField
+                    type="number"
+                    name="winLength"
+                    value={gameConfig.winLength}
+                    onChange={handleConfigChange}
+                    inputProps={{ min: 3, max: 19 }}
+                />
+            </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
                 <EmojiEventsIcon sx={{ marginRight: '0.5rem' }} />
-                <Typography variant="body1" sx={{ fontWeight: 600, marginRight: '0.5rem' }}>
+                <Typography variant="body1" sx={{ fontWeight: 600, marginRight: '0.5rem', width: '150px' }}>
                     Player1: {players[0].username}
                 </Typography>
                 {players[0].ready ? <CheckBoxIcon /> : <CheckBoxOutlineBlankIcon />}
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '2rem' }}>
-                <Typography variant="body1" sx={{ fontWeight: 600, marginRight: '0.5rem', marginLeft: '1.5rem' }}>
+                <Typography variant="body1" sx={{ fontWeight: 600, marginRight: '0.5rem', marginLeft: '1.5rem', width: '150px' }}>
                     Player2: {players[1].username || 'Waiting...'}
                 </Typography>
                 {players[1].ready ? <CheckBoxIcon /> : <CheckBoxOutlineBlankIcon />}
             </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', maxWidth: '600px' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', position: 'absolute', bottom: '5%', padding: '0 25%' }}>
                 <StyledButton onClick={handleExit} sx={{ color: '#B32D2D' }}>Exit</StyledButton>
                 <StyledButton onClick={handleReady}>{isReady ? 'Cancel' : 'Ready'}</StyledButton>
                 <StyledButton onClick={handleStart}>Start</StyledButton>

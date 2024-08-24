@@ -21,10 +21,10 @@ const StyledButton = styled(Button)(({ theme }) => ({
     color: '#1E1E1E',
     border: '1px solid #1E1E1E',
     borderRadius: '8px',
-    padding: '5px 20px',
+    padding: '3px 20px',
     margin: '10px 0',
     width: '200px',
-    fontSize: '1.2rem',
+    fontSize: '1.4rem',
     '&:hover': {
         backgroundColor: '#C2B0B0',
     },

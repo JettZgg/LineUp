@@ -62,7 +62,7 @@ A custom Gomoku
 -   **Monitoring and Logging**: Prometheus, Grafana, ELK Stack
 -   **Testing**: Postman
 
-## How to run
+## How to run locally
 ### Server
 ```bash
 cd server
@@ -75,8 +75,3 @@ go run cmd/server/main.go
 cd client
 npm run dev
 ```
-
-## TODO
-- [ ] match will be removed automatically when it's waiting for 30 min
-- [ ] test APIs
-- [ ] update matches and moves schema

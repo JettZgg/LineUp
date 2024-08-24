@@ -1,5 +1,5 @@
 # LineUp
-A custom Gomoku
+A customizable Gomoku game  
 
 ## Key Features
 

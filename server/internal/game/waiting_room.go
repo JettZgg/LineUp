@@ -87,6 +87,23 @@ func StartMatch(broadcastFunc func(int64, []byte), matchID int64, playerID int64
 	return nil
 }
 
+func SetPlayerReady(broadcastFunc func(int64, []byte), matchID int64, playerID int64, isReady bool) error {
+	match, exists := matches[matchID]
+	if !exists {
+		return errors.New("match not found")
+	}
+
+	if match.Player1ID == playerID {
+		match.Player1Ready = isReady
+	} else if match.Player2ID == playerID {
+		match.Player2Ready = isReady
+	} else {
+		return errors.New("player not in this match")
+	}
+
+	return broadcastGameInfo(broadcastFunc, matchID)
+}
+
 func determineFirstPlayer(player1ID, player2ID int64) int64 {
 	if rand.Intn(2) == 0 {
 		return player1ID

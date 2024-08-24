@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Typography, Box, Button } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { createMatch } from '../services/api';
 import { useTheme } from '@mui/material/styles';
+import JoinMatchModal from './Game/JoinMatchModal'; // Added this import
 
 const StyledBox = styled(Box)(({ theme }) => ({
     display: 'flex',
@@ -49,13 +50,14 @@ const Home = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const theme = useTheme();
+    const [joinModalOpen, setJoinModalOpen] = useState(false);
 
     const handlePlay = async () => {
         try {
             const response = await createMatch();
             console.log('Create match response:', response);
             if (response && response.data && response.data.match && response.data.match.id) {
-                const matchId = response.data.match.id; // This is now a string
+                const matchId = response.data.match.id;
                 console.log('Navigating to waiting room with id:', matchId);
                 navigate(`/match/${matchId}/waiting`);
             } else {
@@ -64,6 +66,10 @@ const Home = () => {
         } catch (error) {
             console.error('Failed to create match:', error);
         }
+    };
+
+    const handleJoin = () => {
+        setJoinModalOpen(true);
     };
 
     const handleLogout = () => {
@@ -83,10 +89,11 @@ const Home = () => {
                 UID: {user.userID}
             </Typography>
             <StyledButton onClick={handlePlay}>Play</StyledButton>
-            <StyledButton>Join</StyledButton>
+            <StyledButton onClick={handleJoin}>Join</StyledButton>
             <StyledButton>History</StyledButton>
             <StyledButton>Settings</StyledButton>
             <LogoutButton onClick={handleLogout}>Logout →</LogoutButton>
+            <JoinMatchModal open={joinModalOpen} onClose={() => setJoinModalOpen(false)} />
         </StyledBox>
     );
 };

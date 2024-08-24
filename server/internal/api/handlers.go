@@ -53,19 +53,30 @@ func LoginHandler(c *gin.Context) {
 func CreateMatchHandler(c *gin.Context) {
     uid := c.GetInt64("uid")
 
-    match, err := game.CreateMatch(uid)
+    config := game.MatchConfig{
+        BoardWidth:  10, // Default values
+        BoardHeight: 10,
+        WinLength:   5,
+    }
+
+    match, err := game.CreateMatch(uid, config)
     if err != nil {
-        log.Printf("Error creating match: %v", err)
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create match", "details": err.Error()})
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    player, err := db.GetUserByID(uid)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get player info"})
         return
     }
 
     c.JSON(http.StatusOK, gin.H{
-        "match": gin.H{
-            "id": strconv.FormatInt(match.MID, 10), // Convert to string
-            "config": match.Config,
+        "match": match,
+        "player": gin.H{
+            "id": strconv.FormatInt(player.UID, 10),
+            "username": player.Username,
         },
-        "serverTime": time.Now().UTC(),
     })
 }
 

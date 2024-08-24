@@ -29,11 +29,24 @@ export const useWebSocket = (matchId, user) => {
             setIsConnecting(false);
             retryCount.current = 0;
             retryDelay.current = INITIAL_RETRY_DELAY;
-            ws.send(JSON.stringify({ type: 'joinMatch', matchId, token: user.token }));
+            const joinMessage = JSON.stringify({ type: 'joinMatch', matchId, token: user.token });
+            console.log('Sending join message:', joinMessage);
+            ws.send(joinMessage);
         };
 
         ws.onmessage = (event) => {
-            setLastMessage(event);
+            console.log('Raw WebSocket message:', event.data);
+            if (event.data === undefined || event.data === 'undefined') {
+                console.error('Received undefined WebSocket message');
+                return;
+            }
+            try {
+                const data = JSON.parse(event.data);
+                console.log('Parsed WebSocket message:', data);
+                setLastMessage(data);
+            } catch (error) {
+                console.error('Error parsing WebSocket message:', error);
+            }
         };
 
         ws.onclose = (event) => {
@@ -73,7 +86,10 @@ export const useWebSocket = (matchId, user) => {
 
     const sendMessage = useCallback((message) => {
         if (socket && socket.readyState === WebSocket.OPEN) {
+            console.log('Sending WebSocket message:', message);
             socket.send(JSON.stringify(message));
+        } else {
+            console.error('WebSocket is not open. Cannot send message:', message);
         }
     }, [socket]);
 

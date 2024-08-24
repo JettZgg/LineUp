@@ -68,9 +68,10 @@ const WaitingRoom = () => {
     const { matchId } = useParams();
     const { user } = useAuth();
     const navigate = useNavigate();
-    const [players, setPlayers] = useState([{ username: user.username, ready: false }, { username: '', ready: false }]);
+    const [players, setPlayers] = useState([]);
     const [isReady, setIsReady] = useState(false);
     const [gameConfig, setGameConfig] = useState({ boardWidth: 10, boardHeight: 10, winLength: 5 });
+    const [isOwner, setIsOwner] = useState(false);
     const { sendMessage, lastMessage, isConnected, isConnecting } = useWebSocket(matchId, user);
 
     useEffect(() => {
@@ -79,26 +80,33 @@ const WaitingRoom = () => {
             navigate('/');
             return;
         }
-        // ... rest of the useEffect
-    }, [matchId, navigate]);
+        sendMessage({ type: 'joinMatch', matchId, token: user.token });
+    }, [matchId, navigate, sendMessage, user.token]);
 
     useEffect(() => {
         if (lastMessage) {
-            const data = JSON.parse(lastMessage.data);
-            if (data.type === 'gameInfo' || data.type === 'playerJoined' || data.type === 'playerLeft' || data.type === 'playerReady') {
-                setPlayers(data.players);
-                if (data.type === 'gameInfo') {
-                    setGameConfig(data.config);
-                }
-            } else if (data.type === 'gameStart') {
+            console.log('Processing WebSocket message in WaitingRoom:', lastMessage);
+            if (lastMessage.type === 'gameInfo' || lastMessage.type === 'playerJoined' || lastMessage.type === 'playerLeft' || lastMessage.type === 'playerReady' || lastMessage.type === 'configUpdated') {
+                setPlayers(prevPlayers => {
+                    const updatedPlayers = lastMessage.players || [];
+                    console.log('Updating players:', updatedPlayers);
+                    return updatedPlayers.length > 0 ? updatedPlayers : prevPlayers;
+                });
+                setGameConfig(prevConfig => {
+                    const updatedConfig = lastMessage.config || {};
+                    console.log('Updating game config:', updatedConfig);
+                    return Object.keys(updatedConfig).length > 0 ? updatedConfig : prevConfig;
+                });
+                setIsOwner(prevIsOwner => {
+                    const updatedIsOwner = lastMessage.players && lastMessage.players.length > 0 && lastMessage.players[0].id === user.userID;
+                    console.log('Updating isOwner:', updatedIsOwner);
+                    return updatedIsOwner;
+                });
+            } else if (lastMessage.type === 'gameStart') {
                 navigate(`/match/${matchId}`);
             }
         }
-    }, [lastMessage, matchId, navigate]);
-
-    useEffect(() => {
-        sendMessage({ type: 'joinMatch', matchId, token: user.token });
-    }, [matchId, sendMessage, user.token]);
+    }, [lastMessage, matchId, navigate, user.userID]);
 
     useEffect(() => {
         const handleBeforeUnload = () => {
@@ -114,11 +122,7 @@ const WaitingRoom = () => {
     const handleReady = () => {
         const newIsReady = !isReady;
         setIsReady(newIsReady);
-        const updatedPlayers = players.map(player =>
-            player.username === user.username ? { ...player, ready: newIsReady } : player
-        );
-        setPlayers(updatedPlayers);
-        sendMessage({ type: 'playerReady', matchId, token: user.token, ready: newIsReady });
+        sendMessage({ type: 'setReady', matchId, ready: newIsReady, token: user.token });
     };
 
     const handleStart = () => {
@@ -138,9 +142,13 @@ const WaitingRoom = () => {
     };
 
     const handleConfigChange = (e) => {
-        setGameConfig({ ...gameConfig, [e.target.name]: parseInt(e.target.value) });
-        sendMessage({ type: 'updateConfig', matchId, token: user.token, config: { ...gameConfig, [e.target.name]: parseInt(e.target.value) } });
+        const { name, value } = e.target;
+        const newConfig = { ...gameConfig, [name]: parseInt(value, 10) };
+        setGameConfig(newConfig);
+        sendMessage({ type: 'updateConfig', matchId, config: newConfig, token: user.token });
     };
+
+    console.log('Rendering WaitingRoom:', { players, isOwner, gameConfig });
 
     return (
         <StyledBox>
@@ -151,14 +159,7 @@ const WaitingRoom = () => {
                 <Typography variant="body1" sx={{ marginRight: '0.5rem' }}>
                     Match ID: {matchId}
                 </Typography>
-                <IconButton
-                    onClick={handleCopyMatchId}
-                    sx={{
-                        '&:focus': {
-                            outline: 'none',
-                        },
-                    }}
-                >
+                <IconButton onClick={handleCopyMatchId} sx={{ '&:focus': { outline: 'none' } }}>
                     <ContentCopyIcon />
                 </IconButton>
             </Box>
@@ -183,6 +184,7 @@ const WaitingRoom = () => {
                     value={gameConfig.boardWidth}
                     onChange={handleConfigChange}
                     inputProps={{ min: 3, max: 99 }}
+                    disabled={!isOwner}
                 />
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
@@ -193,6 +195,7 @@ const WaitingRoom = () => {
                     value={gameConfig.boardHeight}
                     onChange={handleConfigChange}
                     inputProps={{ min: 3, max: 99 }}
+                    disabled={!isOwner}
                 />
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
@@ -203,25 +206,22 @@ const WaitingRoom = () => {
                     value={gameConfig.winLength}
                     onChange={handleConfigChange}
                     inputProps={{ min: 3, max: 19 }}
+                    disabled={!isOwner}
                 />
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
-                <EmojiEventsIcon sx={{ marginRight: '0.5rem' }} />
-                <Typography variant="body1" sx={{ fontWeight: 600, marginRight: '0.5rem', width: '150px' }}>
-                    Player1: {players[0].username}
-                </Typography>
-                {players[0].ready ? <CheckBoxIcon /> : <CheckBoxOutlineBlankIcon />}
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '2rem' }}>
-                <Typography variant="body1" sx={{ fontWeight: 600, marginRight: '0.5rem', marginLeft: '1.5rem', width: '150px' }}>
-                    Player2: {players[1].username || 'Waiting...'}
-                </Typography>
-                {players[1].ready ? <CheckBoxIcon /> : <CheckBoxOutlineBlankIcon />}
-            </Box>
+            {players.map((player, index) => (
+                <Box key={player.id} sx={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+                    {index === 0 && <EmojiEventsIcon sx={{ marginRight: '0.5rem' }} />}
+                    <Typography variant="body1" sx={{ fontWeight: 600, marginRight: '0.5rem', width: '150px' }}>
+                        Player{index + 1}: {player.username}
+                    </Typography>
+                    {player.ready ? <CheckBoxIcon /> : <CheckBoxOutlineBlankIcon />}
+                </Box>
+            ))}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', position: 'absolute', bottom: '5%', padding: '0 20%' }}>
                 <StyledButton onClick={handleExit} sx={{ color: '#B32D2D' }}>Exit</StyledButton>
                 <StyledButton onClick={handleReady}>{isReady ? 'Cancel' : 'Ready'}</StyledButton>
-                <StyledButton onClick={handleStart}>Start</StyledButton>
+                <StyledButton onClick={handleStart} disabled={!isOwner}>Start</StyledButton>
             </Box>
         </StyledBox>
     );

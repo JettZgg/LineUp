@@ -56,7 +56,9 @@ func (c *Client) readPump() {
             log.Printf("error unmarshaling message: %v", err)
             continue
         }
-        if msg["type"] == "getGameInfo" {
+        
+        switch msg["type"] {
+        case "getGameInfo":
             matchID := int64(msg["matchId"].(float64))
             gameInfo, err := game.GetGameInfo(matchID)
             if err != nil {
@@ -65,8 +67,24 @@ func (c *Client) readPump() {
             }
             response, _ := json.Marshal(gameInfo)
             c.send <- response
+        case "updateConfig":
+            matchID := int64(msg["matchId"].(float64))
+            userID := int64(msg["userId"].(float64))
+            var config game.MatchConfig
+            configData, _ := json.Marshal(msg["config"])
+            json.Unmarshal(configData, &config)
+            if err := game.UpdateGameConfig(c.hub.BroadcastToMatch, matchID, userID, config); err != nil {
+                log.Printf("Error updating game config: %v", err)
+                continue
+            }
+        case "startMatch":
+            matchID := int64(msg["matchId"].(float64))
+            userID := int64(msg["userId"].(float64))
+            if err := game.StartMatch(c.hub.BroadcastToMatch, matchID, userID); err != nil {
+                log.Printf("Error starting match: %v", err)
+                continue
+            }
         }
-        // Handle other message types here
     }
 }
 

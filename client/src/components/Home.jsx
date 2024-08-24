@@ -58,8 +58,9 @@ const Home = () => {
             console.log('Create match response:', response);
             if (response && response.data && response.data.match && response.data.match.id) {
                 const matchId = response.data.match.id;
+                const initialPlayers = [response.data.player];
                 console.log('Navigating to waiting room with id:', matchId);
-                navigate(`/match/${matchId}/waiting`);
+                navigate(`/match/${matchId}/waiting`, { state: { initialPlayers } });
             } else {
                 console.error('Invalid response from server:', response);
             }

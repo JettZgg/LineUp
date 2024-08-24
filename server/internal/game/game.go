@@ -51,12 +51,13 @@ func (m Match) MarshalJSON() ([]byte, error) {
 
 var matches = make(map[int64]*Match)
 
-func CreateMatch(playerID int64) (*Match, error) {
+func CreateMatch(playerID int64, config MatchConfig) (*Match, error) {
 	matchID := utils.GenerateMID()
 	match := &Match{
 		MID:       matchID,
 		Player1ID: playerID,
 		Status:    "waiting",
+		Config:    config,
 		StartTime: time.Now().UTC(),
 	}
 
@@ -76,48 +77,58 @@ func CreateMatch(playerID int64) (*Match, error) {
 }
 
 func JoinMatch(broadcastFunc func(int64, []byte), matchID int64, playerID int64) error {
-	match, exists := matches[matchID]
-	if !exists {
-		return errors.New("match not found")
-	}
-	if match.Status != "waiting" {
-		return errors.New("match is not available for joining")
-	}
+    match, exists := matches[matchID]
+    if !exists {
+        return errors.New("match not found")
+    }
 
-	isNewPlayer := match.Player1ID != playerID && match.Player2ID != playerID
+    // Always update the player, whether they're joining or rejoining
+    if match.Player1ID == 0 {
+        match.Player1ID = playerID
+    } else if match.Player2ID == 0 && match.Player1ID != playerID {
+        match.Player2ID = playerID
+    }
 
-	if isNewPlayer {
-		if match.Player2ID == 0 {
-			match.Player2ID = playerID
-			match.Status = "waiting_ready"
+    match.Status = "waiting_ready"
 
-			dbMatch := &db.Match{
-				MID:       match.MID,
-				Player2ID: playerID,
-				Status:    match.Status,
-			}
-			if err := db.UpdateMatch(dbMatch); err != nil {
-				log.Printf("Error updating match in database: %v", err)
-				return fmt.Errorf("failed to update match in database: %w", err)
-			}
+    // Update the match in the database
+    dbMatch := &db.Match{
+        MID:       match.MID,
+        Player1ID: match.Player1ID,
+        Player2ID: match.Player2ID,
+        Status:    match.Status,
+    }
+    if err := db.UpdateMatch(dbMatch); err != nil {
+        log.Printf("Error updating match in database: %v", err)
+        return fmt.Errorf("failed to update match in database: %w", err)
+    }
 
-			log.Printf("Player %d joined match %d", playerID, matchID)
-		} else {
-			return errors.New("match is full")
-		}
-	} else {
-		log.Printf("Player %d rejoined match %d", playerID, matchID)
-	}
+    log.Printf("Player %d joined/rejoined match %d", playerID, matchID)
 
-	gameInfo, err := GetGameInfo(matchID)
-	if err != nil {
-		return fmt.Errorf("failed to get game info: %w", err)
-	}
+    // Broadcast updated game info to all players
+    return broadcastGameInfo(broadcastFunc, matchID)
+}
 
-	msgBytes, _ := json.Marshal(gameInfo)
-	broadcastFunc(matchID, msgBytes)
+func broadcastGameInfo(broadcastFunc func(int64, []byte), matchID int64) error {
+    gameInfo, err := GetGameInfo(matchID)
+    if err != nil {
+        return fmt.Errorf("failed to get game info: %w", err)
+    }
 
-	return nil
+    msgBytes, err := json.Marshal(gameInfo)
+    if err != nil {
+        return fmt.Errorf("failed to marshal game info: %w", err)
+    }
+
+    if string(msgBytes) == "null" || string(msgBytes) == "" {
+        log.Printf("Warning: Attempting to broadcast empty game info for match %d", matchID)
+        return nil
+    }
+
+    log.Printf("Broadcasting game info for match %d: %s", matchID, string(msgBytes))
+    broadcastFunc(matchID, msgBytes)
+
+    return nil
 }
 
 func GetMatch(matchID int64) (*Match, error) {
@@ -276,6 +287,20 @@ func checkGameResult(match *Match, x, y int) map[string]interface{} {
 	return map[string]interface{}{"result": "ongoing"}
 }
 
+func UpdateMatchConfig(broadcastFunc func(int64, []byte), matchID int64, playerID int64, config MatchConfig) error {
+	match, exists := matches[matchID]
+	if !exists {
+		return errors.New("match not found")
+	}
+	if match.Player1ID != playerID {
+		return errors.New("only the match owner can update the configuration")
+	}
+
+	match.Config = config
+
+	return broadcastGameInfo(broadcastFunc, matchID)
+}
+
 func SetPlayerReady(broadcastFunc func(int64, []byte), matchID int64, playerID int64, isReady bool) error {
 	match, exists := matches[matchID]
 	if !exists {
@@ -290,30 +315,7 @@ func SetPlayerReady(broadcastFunc func(int64, []byte), matchID int64, playerID i
 		return errors.New("player not in this match")
 	}
 
-	if match.Player1Ready && match.Player2Ready {
-		match.Status = "ready_to_start"
-	} else {
-		match.Status = "waiting_ready"
-	}
-
-	dbMatch := &db.Match{
-		MID:    match.MID,
-		Status: match.Status,
-	}
-	if err := db.UpdateMatch(dbMatch); err != nil {
-		log.Printf("Error updating match in database: %v", err)
-		return fmt.Errorf("failed to update match in database: %w", err)
-	}
-
-	gameInfo, err := GetGameInfo(matchID)
-	if err != nil {
-		return fmt.Errorf("failed to get game info: %w", err)
-	}
-
-	msgBytes, _ := json.Marshal(gameInfo)
-	broadcastFunc(matchID, msgBytes)
-
-	return nil
+	return broadcastGameInfo(broadcastFunc, matchID)
 }
 
 func LeaveMatch(broadcastFunc func(int64, []byte), matchID int64, playerID int64) error {

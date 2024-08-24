@@ -9,7 +9,7 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 
-const StyledBox = styled(Box)({
+const StyledBox = styled(Box)(({ theme }) => ({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -17,9 +17,9 @@ const StyledBox = styled(Box)({
     minHeight: '100vh',
     width: '100vw',
     backgroundColor: '#BF9D9D',
-});
+}));
 
-const StyledButton = styled(Button)({
+const StyledButton = styled(Button)(({ theme }) => ({
     backgroundColor: '#DCC2C2',
     color: '#1E1E1E',
     border: '1px solid #1E1E1E',
@@ -27,14 +27,22 @@ const StyledButton = styled(Button)({
     padding: '10px 20px',
     margin: '10px 0',
     width: '200px',
-    fontFamily: 'Lora, serif',
+    fontFamily: theme.typography.fontFamily,
     fontSize: '1.2rem',
     '&:hover': {
         backgroundColor: '#C2B0B0',
     },
-});
+    '&:focus': {
+        outline: 'none',
+        boxShadow: 'none',
+    },
+    '&:active': {
+        outline: 'none',
+        boxShadow: 'none',
+    },
+}));
 
-const StyledTextField = styled(TextField)({
+const StyledTextField = styled(TextField)(({ theme }) => ({
     '& .MuiOutlinedInput-root': {
         '& fieldset': {
             borderColor: '#1E1E1E',
@@ -48,9 +56,10 @@ const StyledTextField = styled(TextField)({
     },
     '& .MuiInputBase-input': {
         color: '#1E1E1E',
+        fontFamily: theme.typography.fontFamily,
     },
     marginBottom: '10px',
-});
+}));
 
 const WaitingRoom = () => {
     const { matchId } = useParams();
@@ -64,11 +73,11 @@ const WaitingRoom = () => {
     useEffect(() => {
         if (lastMessage) {
             const data = JSON.parse(lastMessage.data);
-            if (data.type === 'gameInfo') {
+            if (data.type === 'gameInfo' || data.type === 'playerJoined' || data.type === 'playerLeft' || data.type === 'playerReady') {
                 setPlayers(data.players);
-                setGameConfig(data.config);
-            } else if (data.type === 'playerJoined' || data.type === 'playerLeft') {
-                setPlayers(data.players);
+                if (data.type === 'gameInfo') {
+                    setGameConfig(data.config);
+                }
             } else if (data.type === 'gameStart') {
                 navigate(`/match/${matchId}`);
             }
@@ -91,8 +100,13 @@ const WaitingRoom = () => {
     }, [matchId, sendMessage, user.token]);
 
     const handleReady = () => {
-        setIsReady(!isReady);
-        sendMessage({ type: 'playerReady', matchId, token: user.token, ready: !isReady });
+        const newIsReady = !isReady;
+        setIsReady(newIsReady);
+        const updatedPlayers = players.map(player =>
+            player.username === user.username ? { ...player, ready: newIsReady } : player
+        );
+        setPlayers(updatedPlayers);
+        sendMessage({ type: 'playerReady', matchId, token: user.token, ready: newIsReady });
     };
 
     const handleStart = () => {
@@ -122,14 +136,14 @@ const WaitingRoom = () => {
                 LineUp
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '2rem' }}>
-                <Typography variant="body1" sx={{ fontFamily: 'Lora, serif', fontWeight: 600, marginRight: '0.5rem' }}>
+                <Typography variant="body1" sx={{ fontWeight: 600, marginRight: '0.5rem' }}>
                     Match ID: {matchId}
                 </Typography>
                 <IconButton onClick={handleCopyMatchId}>
                     <ContentCopyIcon />
                 </IconButton>
             </Box>
-            <Typography variant="h5" sx={{ fontFamily: 'Lora, serif', fontWeight: 600, marginBottom: '1rem' }}>
+            <Typography variant="h5" sx={{ fontWeight: 600, marginBottom: '1rem' }}>
                 Board Settings
             </Typography>
             <StyledTextField
@@ -158,13 +172,13 @@ const WaitingRoom = () => {
             />
             <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
                 <EmojiEventsIcon sx={{ marginRight: '0.5rem' }} />
-                <Typography variant="body1" sx={{ fontFamily: 'Lora, serif', fontWeight: 600, marginRight: '0.5rem' }}>
+                <Typography variant="body1" sx={{ fontWeight: 600, marginRight: '0.5rem' }}>
                     Player1: {players[0].username}
                 </Typography>
                 {players[0].ready ? <CheckBoxIcon /> : <CheckBoxOutlineBlankIcon />}
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '2rem' }}>
-                <Typography variant="body1" sx={{ fontFamily: 'Lora, serif', fontWeight: 600, marginRight: '0.5rem', marginLeft: '1.5rem' }}>
+                <Typography variant="body1" sx={{ fontWeight: 600, marginRight: '0.5rem', marginLeft: '1.5rem' }}>
                     Player2: {players[1].username || 'Waiting...'}
                 </Typography>
                 {players[1].ready ? <CheckBoxIcon /> : <CheckBoxOutlineBlankIcon />}

@@ -28,6 +28,14 @@ const StyledButton = styled(Button)(({ theme }) => ({
     '&:hover': {
         backgroundColor: '#C2B0B0',
     },
+    '&:focus': {
+        outline: 'none',
+        boxShadow: 'none',
+    },
+    '&:active': {
+        outline: 'none',
+        boxShadow: 'none',
+    },
 }));
 
 const LogoutButton = styled(StyledButton)(({ theme }) => ({

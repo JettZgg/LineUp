@@ -115,8 +115,13 @@ const Login = () => {
                     Sign In
                 </StyledButton>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', color: '#1E1E1E' }}>
-                    <Typography variant="body2">Forgot password?</Typography>
-                    <Typography variant="body2" component="a" href="/register" sx={{ textDecoration: 'none', color: '#1E1E1E' }}>
+                    <Typography variant="body2" sx={{ textDecoration: 'underline' }}>Forgot password?</Typography>
+                    <Typography 
+                        variant="body2" 
+                        component="a" 
+                        href="/register" 
+                        sx={{ textDecoration: 'underline', color: '#1E1E1E' }}
+                    >
                         Register
                     </Typography>
                 </Box>

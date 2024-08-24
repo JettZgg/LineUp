@@ -4,8 +4,9 @@ import { styled } from '@mui/material/styles';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { createMatch } from '../services/api';
+import { useTheme } from '@mui/material/styles';
 
-const StyledBox = styled(Box)({
+const StyledBox = styled(Box)(({ theme }) => ({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -13,9 +14,9 @@ const StyledBox = styled(Box)({
     minHeight: '100vh',
     width: '100vw',
     backgroundColor: '#BF9D9D',
-});
+}));
 
-const StyledButton = styled(Button)({
+const StyledButton = styled(Button)(({ theme }) => ({
     backgroundColor: '#DCC2C2',
     color: '#1E1E1E',
     border: '1px solid #1E1E1E',
@@ -23,23 +24,23 @@ const StyledButton = styled(Button)({
     padding: '5px 20px',
     margin: '10px 0',
     width: '200px',
-    fontFamily: 'Lora, serif',
-    fontSize: '1.2rem', // Increase this value to make the text bigger
+    fontSize: '1.2rem',
     '&:hover': {
         backgroundColor: '#C2B0B0',
     },
-});
+}));
 
-const LogoutButton = styled(StyledButton)({
+const LogoutButton = styled(StyledButton)(({ theme }) => ({
     color: '#B32D2D',
     position: 'absolute',
     bottom: '20px',
     left: '20px',
-});
+}));
 
 const Home = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const theme = useTheme();
 
     const handlePlay = async () => {
         try {
@@ -61,13 +62,13 @@ const Home = () => {
 
     return (
         <StyledBox>
-            <Typography variant="h4" gutterBottom align="center" sx={{ fontFamily: 'Explora, cursive', fontSize: '6rem', color: '#1E1E1E', marginBottom: '2rem' }}>
+            <Typography variant="h4" gutterBottom align="center" sx={{ fontSize: '6rem', color: '#1E1E1E', marginBottom: '2rem' }}>
                 LineUp
             </Typography>
-            <Typography variant="body1" sx={{ fontFamily: 'Lora, serif', fontWeight: 600, marginBottom: '1rem' }}>
+            <Typography variant="body1" sx={{ marginBottom: '1rem' }}>
                 Username: {user.username}
             </Typography>
-            <Typography variant="body1" sx={{ fontFamily: 'Lora, serif', fontWeight: 600, marginBottom: '2rem' }}>
+            <Typography variant="body1" sx={{ marginBottom: '2rem' }}>
                 UID: {user.userID}
             </Typography>
             <StyledButton onClick={handlePlay}>Play</StyledButton>

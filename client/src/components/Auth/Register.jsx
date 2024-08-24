@@ -5,8 +5,9 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { TextField, Button, Typography, Box } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 
-const StyledBox = styled(Box)({
+const StyledBox = styled(Box)(({ theme }) => ({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -14,27 +15,27 @@ const StyledBox = styled(Box)({
     minHeight: '100vh',
     width: '100vw',
     backgroundColor: '#BF9D9D',
-});
+}));
 
-const StyledForm = styled(Box)({
+const StyledForm = styled(Box)(({ theme }) => ({
     backgroundColor: '#DCC2C2',
     padding: '2rem',
     borderRadius: '8px',
     width: '300px',
     border: '1px solid #1E1E1E',
     boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-});
+}));
 
-const StyledButton = styled(Button)({
+const StyledButton = styled(Button)(({ theme }) => ({
     backgroundColor: '#65558F',
     color: '#F5F5F5',
     border: '1px solid #1E1E1E',
     '&:hover': {
         backgroundColor: '#5048C5',
     },
-});
+}));
 
-const StyledTextField = styled(TextField)({
+const StyledTextField = styled(TextField)(({ theme }) => ({
     '& .MuiOutlinedInput-root': {
         '& fieldset': {
             borderColor: '#1E1E1E',
@@ -54,7 +55,7 @@ const StyledTextField = styled(TextField)({
         WebkitTextFillColor: '#1E1E1E',
     },
     marginBottom: '10px',
-});
+}));
 
 const Register = () => {
     const [username, setUsername] = useState('');
@@ -62,6 +63,7 @@ const Register = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const { login } = useAuth();
     const navigate = useNavigate();
+    const theme = useTheme();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -80,7 +82,7 @@ const Register = () => {
 
     return (
         <StyledBox>
-            <Typography variant="h4" gutterBottom align="center" sx={{ fontFamily: 'Explora, cursive', fontSize: '6rem', color: '#1E1E1E', marginBottom: '2rem' }}>
+            <Typography variant="h4" gutterBottom align="center" sx={{ fontSize: '6rem', color: '#1E1E1E', marginBottom: '2rem' }}>
                 LineUp
             </Typography>
             <StyledForm component="form" onSubmit={handleSubmit}>
@@ -93,12 +95,6 @@ const Register = () => {
                     autoFocus
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    InputProps={{
-                        style: { fontFamily: 'Lora, serif' }
-                    }}
-                    InputLabelProps={{
-                        style: { fontFamily: 'Lora, serif' }
-                    }}
                 />
                 <StyledTextField
                     fullWidth
@@ -109,12 +105,6 @@ const Register = () => {
                     autoComplete="new-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    InputProps={{
-                        style: { fontFamily: 'Lora, serif' }
-                    }}
-                    InputLabelProps={{
-                        style: { fontFamily: 'Lora, serif' }
-                    }}
                 />
                 <StyledTextField
                     fullWidth
@@ -125,18 +115,12 @@ const Register = () => {
                     autoComplete="new-password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    InputProps={{
-                        style: { fontFamily: 'Lora, serif' }
-                    }}
-                    InputLabelProps={{
-                        style: { fontFamily: 'Lora, serif' }
-                    }}
                 />
                 <StyledButton
                     type="submit"
                     fullWidth
                     variant="contained"
-                    sx={{ mt: '1rem', mb: 2, fontFamily: 'Lora, serif' }}
+                    sx={{ mt: '1rem', mb: 2 }}
                 >
                     Register
                 </StyledButton>

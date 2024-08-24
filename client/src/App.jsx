@@ -3,6 +3,7 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { themeConfig } from './themeConfig';
 import CssBaseline from '@mui/material/CssBaseline';
 import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
@@ -13,16 +14,7 @@ import GameBoard from './components/Game/GameBoard';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import WaitingRoom from './components/Game/WaitingRoom';
 
-const theme = createTheme({
-  typography: {
-    fontFamily: 'Lora, serif',
-    fontWeightRegular: 600,
-    h4: {
-      fontFamily: 'Explora, cursive',
-      fontWeight: 400,
-    },
-  },
-});
+const theme = createTheme(themeConfig);
 
 const App = () => {
   return (

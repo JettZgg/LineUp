@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { TextField, Button, Typography, Box } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 
 const StyledBox = styled(Box)({
     display: 'flex',
@@ -33,7 +34,7 @@ const StyledButton = styled(Button)({
     },
 });
 
-const StyledTextField = styled(TextField)({
+const StyledTextField = styled(TextField)(({ theme }) => ({
     '& .MuiOutlinedInput-root': {
         '& fieldset': {
             borderColor: '#1E1E1E',
@@ -47,19 +48,22 @@ const StyledTextField = styled(TextField)({
     },
     '& .MuiInputBase-input': {
         color: '#1E1E1E',
+        fontFamily: theme.typography.fontFamily,
+        fontWeight: theme.typography.fontWeightRegular,
     },
     '& input:-webkit-autofill': {
         WebkitBoxShadow: '0 0 0 1000px #DCC2C2 inset',
         WebkitTextFillColor: '#1E1E1E',
     },
     marginBottom: '10px',
-});
+}));
 
 const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const { login } = useAuth();
     const navigate = useNavigate();
+    const theme = useTheme();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -78,7 +82,7 @@ const Login = () => {
 
     return (
         <StyledBox>
-            <Typography variant="h4" gutterBottom align="center" sx={{ fontFamily: 'Explora, cursive', fontSize: '6rem', color: '#1E1E1E', marginBottom: '2rem', fontWeight: 400 }}>
+            <Typography variant="h4" gutterBottom align="center" sx={{ fontSize: '6rem', color: '#1E1E1E', marginBottom: '2rem' }}>
                 LineUp
             </Typography>
             <StyledForm component="form" onSubmit={handleSubmit}>
@@ -91,12 +95,6 @@ const Login = () => {
                     autoFocus
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    InputProps={{
-                        style: { fontFamily: 'Lora, serif', fontWeight: 600 }
-                    }}
-                    InputLabelProps={{
-                        style: { fontFamily: 'Lora, serif', fontWeight: 600 }
-                    }}
                 />
                 <StyledTextField
                     fullWidth
@@ -107,24 +105,18 @@ const Login = () => {
                     autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    InputProps={{
-                        style: { fontFamily: 'Lora, serif', fontWeight: 600 }
-                    }}
-                    InputLabelProps={{
-                        style: { fontFamily: 'Lora, serif', fontWeight: 600 }
-                    }}
                 />
                 <StyledButton
                     type="submit"
                     fullWidth
                     variant="contained"
-                    sx={{ mt: '1rem', mb: 2, fontFamily: 'Lora, serif', fontWeight: 600 }}
+                    sx={{ mt: '1rem', mb: 2 }}
                 >
                     Sign In
                 </StyledButton>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'Lora, serif', fontWeight: 600, color: '#1E1E1E' }}>
-                    <Typography variant="body2" sx={{ fontFamily: 'Lora, serif', fontWeight: 600 }}>Forgot password?</Typography>
-                    <Typography variant="body2" component="a" href="/register" sx={{ textDecoration: 'none', color: '#1E1E1E', fontFamily: 'Lora, serif', fontWeight: 600 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', color: '#1E1E1E' }}>
+                    <Typography variant="body2">Forgot password?</Typography>
+                    <Typography variant="body2" component="a" href="/register" sx={{ textDecoration: 'none', color: '#1E1E1E' }}>
                         Register
                     </Typography>
                 </Box>

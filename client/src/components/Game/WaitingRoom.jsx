@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Typography, Button, TextField, IconButton } from '@mui/material';
+import { Box, Typography, Button, TextField, IconButton, Alert, CircularProgress } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useWebSocket } from '../../services/websocket';
 import { useAuth } from '../../contexts/AuthContext';
@@ -71,7 +71,16 @@ const WaitingRoom = () => {
     const [players, setPlayers] = useState([{ username: user.username, ready: false }, { username: '', ready: false }]);
     const [isReady, setIsReady] = useState(false);
     const [gameConfig, setGameConfig] = useState({ boardWidth: 10, boardHeight: 10, winLength: 5 });
-    const { sendMessage, lastMessage } = useWebSocket(matchId);
+    const { sendMessage, lastMessage, isConnected, isConnecting } = useWebSocket(matchId, user);
+
+    useEffect(() => {
+        if (!matchId || matchId === 'undefined') {
+            console.error('Invalid match ID');
+            navigate('/');
+            return;
+        }
+        // ... rest of the useEffect
+    }, [matchId, navigate]);
 
     useEffect(() => {
         if (lastMessage) {
@@ -139,7 +148,7 @@ const WaitingRoom = () => {
                 LineUp
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '2rem' }}>
-                <Typography variant="body1" sx={{ fontWeight: 600, marginRight: '0.5rem' }}>
+                <Typography variant="body1" sx={{ marginRight: '0.5rem' }}>
                     Match ID: {matchId}
                 </Typography>
                 <IconButton
@@ -153,6 +162,16 @@ const WaitingRoom = () => {
                     <ContentCopyIcon />
                 </IconButton>
             </Box>
+            {isConnecting && (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                    Connecting to server... <CircularProgress size={20} sx={{ ml: 1 }} />
+                </Alert>
+            )}
+            {!isConnecting && !isConnected && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                    Failed to connect to server. Please try refreshing the page.
+                </Alert>
+            )}
             <Typography variant="h5" sx={{ fontWeight: 600, marginBottom: '1rem' }}>
                 Board Settings
             </Typography>
@@ -199,7 +218,7 @@ const WaitingRoom = () => {
                 </Typography>
                 {players[1].ready ? <CheckBoxIcon /> : <CheckBoxOutlineBlankIcon />}
             </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', position: 'absolute', bottom: '5%', padding: '0 25%' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', position: 'absolute', bottom: '5%', padding: '0 20%' }}>
                 <StyledButton onClick={handleExit} sx={{ color: '#B32D2D' }}>Exit</StyledButton>
                 <StyledButton onClick={handleReady}>{isReady ? 'Cancel' : 'Ready'}</StyledButton>
                 <StyledButton onClick={handleStart}>Start</StyledButton>

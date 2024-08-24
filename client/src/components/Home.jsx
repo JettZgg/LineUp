@@ -53,8 +53,11 @@ const Home = () => {
     const handlePlay = async () => {
         try {
             const response = await createMatch();
-            if (response && response.data) {
-                navigate(`/match/${response.data.id}/waiting`);
+            console.log('Create match response:', response);
+            if (response && response.data && response.data.match && response.data.match.id) {
+                const matchId = response.data.match.id; // This is now a string
+                console.log('Navigating to waiting room with id:', matchId);
+                navigate(`/match/${matchId}/waiting`);
             } else {
                 console.error('Invalid response from server:', response);
             }

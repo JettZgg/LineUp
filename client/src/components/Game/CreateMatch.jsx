@@ -13,16 +13,10 @@ const CreateMatch = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            console.log('Sending create match request with:', { boardWidth, boardHeight, winLength });
             const response = await createMatch({ boardWidth, boardHeight, winLength });
-            console.log('Create match response:', response);
-
-            if (response && response.data) {
-                console.log('Response data:', response.data);
-                const matchId = response.data.id || (response.data.match && response.data.match.id);
-                console.log('Match ID:', matchId);
+            if (response && response.data && response.data.match) {
+                const matchId = response.data.match.id;
                 if (matchId) {
-                    console.log('Navigating to waiting room with id:', matchId);
                     navigate(`/match/${matchId}/waiting`);
                 } else {
                     console.error('No match ID found in response:', response.data);

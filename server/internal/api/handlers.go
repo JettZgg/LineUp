@@ -61,7 +61,10 @@ func CreateMatchHandler(c *gin.Context) {
     }
 
     c.JSON(http.StatusOK, gin.H{
-        "match":      match,
+        "match": gin.H{
+            "id": strconv.FormatInt(match.MID, 10), // Convert to string
+            "config": match.Config,
+        },
         "serverTime": time.Now().UTC(),
     })
 }

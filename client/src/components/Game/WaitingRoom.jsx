@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Typography, Button, TextField, IconButton, Alert, CircularProgress } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useWebSocket } from '../../services/websocket';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../common/AuthContext';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';

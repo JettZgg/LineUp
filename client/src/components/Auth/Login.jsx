@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { login as loginApi } from '../../services/api';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../common/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { TextField, Button, Typography, Box } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useTheme } from '@mui/material/styles';
+import PageLayout from '../layout/PageLayout';
 
 const StyledBox = styled(Box)({
     display: 'flex',
@@ -86,10 +87,7 @@ const Login = () => {
     };
 
     return (
-        <StyledBox>
-            <Typography variant="h4" gutterBottom align="center" sx={{ fontSize: '6rem', color: '#1E1E1E', marginBottom: '2rem' }}>
-                LineUp
-            </Typography>
+        <PageLayout>
             <StyledForm component="form" onSubmit={handleSubmit}>
                 <StyledTextField
                     fullWidth
@@ -131,7 +129,7 @@ const Login = () => {
                     </Typography>
                 </Box>
             </StyledForm>
-        </StyledBox>
+        </PageLayout>
     );
 };
 

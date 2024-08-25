@@ -1,21 +1,11 @@
 import React, { useState } from 'react';
 import { Typography, Box, Button } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from './common/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { createMatch } from '../services/api';
-import { useTheme } from '@mui/material/styles';
 import JoinMatchModal from './Game/JoinMatchModal';
-
-const StyledBox = styled(Box)(({ theme }) => ({
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '100vh',
-    width: '100vw',
-    backgroundColor: '#BF9D9D',
-}));
+import PageLayout from './layout/PageLayout';
 
 const StyledButton = styled(Button)(({ theme }) => ({
     backgroundColor: '#DCC2C2',
@@ -49,7 +39,6 @@ const LogoutButton = styled(StyledButton)(({ theme }) => ({
 const Home = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
-    const theme = useTheme();
     const [joinModalOpen, setJoinModalOpen] = useState(false);
 
     const handlePlay = async () => {
@@ -79,10 +68,7 @@ const Home = () => {
     };
 
     return (
-        <StyledBox>
-            <Typography variant="h4" gutterBottom align="center" sx={{ fontSize: '6rem', color: '#1E1E1E', marginBottom: '2rem' }}>
-                LineUp
-            </Typography>
+        <PageLayout>
             <Typography variant="body1" sx={{ marginBottom: '1rem' }}>
                 Username: {user.username}
             </Typography>
@@ -95,7 +81,7 @@ const Home = () => {
             <StyledButton>Settings</StyledButton>
             <LogoutButton onClick={handleLogout}>Logout →</LogoutButton>
             <JoinMatchModal open={joinModalOpen} onClose={() => setJoinModalOpen(false)} />
-        </StyledBox>
+        </PageLayout>
     );
 };
 

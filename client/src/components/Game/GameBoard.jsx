@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useWebSocket } from '../../services/websocket';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../common/AuthContext';
 import { Box, Typography, Button } from '@mui/material';
 
 const GameBoard = () => {

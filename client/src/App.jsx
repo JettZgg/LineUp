@@ -1,7 +1,7 @@
 // src/App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider } from './components/common/AuthContext';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { themeConfig } from './themeConfig';
 import CssBaseline from '@mui/material/CssBaseline';

@@ -3,6 +3,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button } 
 import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 import { joinMatch } from '../../services/api';
+import { useAuth } from '../common/AuthContext';
 
 const StyledDialog = styled(Dialog)(({ theme }) => ({
     '& .MuiDialog-paper': {
@@ -47,15 +48,26 @@ const StyledButton = styled(Button)(({ theme }) => ({
 const JoinMatchModal = ({ open, onClose }) => {
     const [matchId, setMatchId] = useState('');
     const navigate = useNavigate();
+    const { user } = useAuth();
 
     const handleJoin = async () => {
         try {
-            const response = await joinMatch(matchId);
+            const response = await joinMatch(matchId, user.token);
             if (response && response.data) {
-                navigate(`/match/${matchId}/waiting`);
+                navigate(`/match/${matchId}`);
             }
         } catch (error) {
             console.error('Failed to join match:', error);
+            let errorMessage = 'An error occurred while joining the match.';
+            if (error.response) {
+                if (error.response.status === 500) {
+                    errorMessage = 'Internal server error. Please try again later.';
+                } else {
+                    errorMessage = error.response.data.message || errorMessage;
+                }
+            }
+            // TODO: Display errorMessage to the user (e.g., using a snackbar or alert)
+            console.error('Error message:', errorMessage);
         }
         onClose();
     };

@@ -1,10 +1,3 @@
-next steps:
--  can create a match but cannot get the right match id
--  the rect does get ticked when clicked the ready button
--  join match
--  upgrade the waiting room page
--  Set up a CI/CD pipeline for automated testing and deployment
-
 -- Drop tables if they exist
 DROP TABLE IF EXISTS matches, users;
 
@@ -22,13 +15,8 @@ CREATE TABLE IF NOT EXISTS matches (
     id BIGINT PRIMARY KEY,
     player1_id BIGINT REFERENCES users(uid),
     player2_id BIGINT REFERENCES users(uid),
-    status VARCHAR(50),
-    start_time TIMESTAMP WITH TIME ZONE,
-    end_time TIMESTAMP WITH TIME ZONE,
     winner BIGINT,
-    board_width INTEGER,
-    board_height INTEGER,
-    win_length INTEGER,
     first_move_player_id BIGINT,
-    moves JSONB
+    moves TEXT,
+    date TIMESTAMP WITH TIME ZONE
 );

@@ -1,22 +1,11 @@
 // src/components/Auth/Register.jsx
 import React, { useState } from 'react';
-import { register } from '../../services/api';
+import { register } from '../../services/auth';
 import { useAuth } from '../common/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { TextField, Button, Typography, Box } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { useTheme } from '@mui/material/styles';
 import PageLayout from '../layout/PageLayout';
-
-const StyledBox = styled(Box)(({ theme }) => ({
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '100vh',
-    width: '100vw',
-    backgroundColor: '#BF9D9D',
-}));
 
 const StyledForm = styled(Box)(({ theme }) => ({
     backgroundColor: '#DCC2C2',
@@ -70,7 +59,6 @@ const Register = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const { login } = useAuth();
     const navigate = useNavigate();
-    const theme = useTheme();
 
     const handleSubmit = async (e) => {
         e.preventDefault();

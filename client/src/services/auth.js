@@ -1,9 +1,8 @@
-// src/services/auth.js
 import api from './api';
 
 export const login = async (username, password) => {
     const response = await api.post('/login', { username, password });
-    return response.data;
+    return response;
 };
 
 export const register = async (username, password) => {
@@ -12,15 +11,18 @@ export const register = async (username, password) => {
 };
 
 export const logout = () => {
-    // Clear token from localStorage
-    localStorage.removeItem('token');
+    localStorage.removeItem('user');
 };
 
 export const getCurrentUser = () => {
-    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    return user ? JSON.parse(user) : null;
+};
+
+export const setAuthToken = (token) => {
     if (token) {
-        // You might want to decode the JWT token here to get user info
-        return { token };
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    } else {
+        delete api.defaults.headers.common['Authorization'];
     }
-    return null;
 };

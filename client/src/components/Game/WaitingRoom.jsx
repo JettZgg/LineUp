@@ -85,24 +85,13 @@ const WaitingRoom = () => {
 
     useEffect(() => {
         if (lastMessage) {
-            console.log('Processing WebSocket message in WaitingRoom:', lastMessage);
-            if (lastMessage.type === 'gameInfo' || lastMessage.type === 'playerJoined' || lastMessage.type === 'playerLeft' || lastMessage.type === 'playerReady' || lastMessage.type === 'configUpdated') {
-                setPlayers(prevPlayers => {
-                    const updatedPlayers = lastMessage.players || [];
-                    console.log('Updating players:', updatedPlayers);
-                    return updatedPlayers.length > 0 ? updatedPlayers : prevPlayers;
-                });
-                setGameConfig(prevConfig => {
-                    const updatedConfig = lastMessage.config || {};
-                    console.log('Updating game config:', updatedConfig);
-                    return Object.keys(updatedConfig).length > 0 ? updatedConfig : prevConfig;
-                });
-                setIsOwner(prevIsOwner => {
-                    const updatedIsOwner = lastMessage.players && lastMessage.players.length > 0 && lastMessage.players[0].id === user.userID;
-                    console.log('Updating isOwner:', updatedIsOwner);
-                    return updatedIsOwner;
-                });
-            } else if (lastMessage.type === 'gameStart') {
+            const { type, players: updatedPlayers, config: updatedConfig } = lastMessage;
+
+            if (['gameInfo', 'playerJoined', 'playerLeft', 'playerReady', 'configUpdated'].includes(type)) {
+                if (updatedPlayers) setPlayers(updatedPlayers);
+                if (updatedConfig) setGameConfig(updatedConfig);
+                setIsOwner(updatedPlayers && updatedPlayers.length > 0 && updatedPlayers[0].id === user.userID);
+            } else if (type === 'gameStart') {
                 navigate(`/match/${matchId}`);
             }
         }
@@ -147,8 +136,6 @@ const WaitingRoom = () => {
         setGameConfig(newConfig);
         sendMessage({ type: 'updateConfig', matchId, config: newConfig, token: user.token });
     };
-
-    console.log('Rendering WaitingRoom:', { players, isOwner, gameConfig });
 
     return (
         <StyledBox>

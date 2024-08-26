@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/JettZgg/LineUp/internal/db"
 )
@@ -136,13 +135,13 @@ func broadcastGameInfo(broadcastFunc func(int64, []byte), matchID int64) error {
 	return nil
 }
 
-func updateMatchInDatabase(match *Match, endTime time.Time, winner int64) error {
+func updateMatchInDatabase(match *Match) error {
 	dbMatch := &db.Match{
 		MID:       match.MID,
 		Player2ID: match.Player2ID,
 		Status:    match.Status,
-		EndTime:   endTime,
-		Winner:    winner,
+		EndTime:   match.EndTime,
+		Winner:    match.Winner,
 		Moves:     match.Moves,
 	}
 	return db.UpdateMatch(dbMatch)

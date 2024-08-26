@@ -25,6 +25,8 @@ type Match struct {
 	Status            string      `json:"status"`
 	Config            MatchConfig `json:"config"`
 	StartTime         time.Time   `json:"startTime"`
+	EndTime           time.Time   `json:"endTime"`
+	Winner            int64       `json:"winner"`
 	FirstMovePlayerID int64       `json:"firstMovePlayerId"`
 	Moves             []db.Move   `json:"moves"`
 	Player1Ready      bool        `json:"player1Ready"`
@@ -79,55 +81,62 @@ func GetMatch(matchID int64) (*Match, error) {
 	return match, nil
 }
 
-func MakeMove(broadcastFunc func(int64, []byte), matchID int64, playerID int64, x, y int) (map[string]interface{}, error) {
-	match, err := GetMatch(matchID)
-	if err != nil {
-		return nil, err
-	}
-	if match.Status != "ongoing" {
-		return nil, errors.New("match is not ongoing")
-	}
-	if (match.Player1ID != playerID && match.Player2ID != playerID) || (match.Board[y][x] != "") {
-		return nil, errors.New("invalid move")
-	}
+func MakeMove(broadcastFunc func(int64, []byte), matchID int64, playerID int64, x, y int) ([]byte, error) {
+    match, err := GetMatch(matchID)
+    if err != nil {
+        return nil, err
+    }
+    if match.Status != "ongoing" {
+        return nil, errors.New("match is not ongoing")
+    }
+    if (match.Player1ID != playerID && match.Player2ID != playerID) || (match.Board[y][x] != "") {
+        return nil, errors.New("invalid move")
+    }
 
-	symbol := "X"
-	if playerID == match.Player2ID {
-		symbol = "O"
-	}
-	match.Board[y][x] = symbol
+    symbol := "X"
+    if playerID == match.Player2ID {
+        symbol = "O"
+    }
+    match.Board[y][x] = symbol
 
-	// Add the move to the match's Moves slice
-	move := db.Move{X: x, Y: y}
-	match.Moves = append(match.Moves, move)
+    // Add the move to the match's Moves slice
+    move := db.Move{X: x, Y: y}
+    match.Moves = append(match.Moves, move)
 
-	result := checkGameResult(match, x, y)
+    result := checkGameResult(match, x, y)
 
-	// Create a message to broadcast
-	updateMsg := map[string]interface{}{
-		"type":    "moveUpdate",
-		"matchID": matchID,
-		"board":   match.Board,
-		"result":  result,
-	}
+    // Create a message to broadcast
+    updateMsg := map[string]interface{}{
+        "type":    "moveUpdate",
+        "matchID": matchID,
+        "board":   match.Board,
+        "result":  result,
+        "lastMove": map[string]interface{}{
+            "playerID": playerID,
+            "x":        x,
+            "y":        y,
+        },
+    }
 
-	msgBytes, _ := json.Marshal(updateMsg)
-	broadcastFunc(matchID, msgBytes)
+    msgBytes, err := json.Marshal(updateMsg)
+    if err != nil {
+        return nil, fmt.Errorf("failed to marshal move update: %w", err)
+    }
 
-	if result["result"] != "ongoing" {
-		match.Status = "finished"
-		endTime := time.Now()
-		winner := playerID
-		if result["result"] == "draw" {
-			winner = -1 // Use -1 to indicate a draw
-		}
-		if err := updateMatchInDatabase(match, endTime, winner); err != nil {
-			log.Printf("Failed to update match in database: %v", err)
-		}
-		delete(matches, matchID) // Remove finished game from memory
-	}
+    if result["result"] != "ongoing" {
+        match.Status = "finished"
+        match.EndTime = time.Now()
+        match.Winner = playerID
+        if result["result"] == "draw" {
+            match.Winner = -1 // Use -1 to indicate a draw
+        }
+        if err := updateMatchInDatabase(match); err != nil {
+            log.Printf("Failed to update match in database: %v", err)
+        }
+        delete(matches, matchID) // Remove finished game from memory
+    }
 
-	return result, nil
+    return msgBytes, nil
 }
 
 func UpdateMatchConfig(broadcastFunc func(int64, []byte), matchID int64, playerID int64, config MatchConfig) error {
@@ -142,4 +151,17 @@ func UpdateMatchConfig(broadcastFunc func(int64, []byte), matchID int64, playerI
 	match.Config = config
 
 	return broadcastGameInfo(broadcastFunc, matchID)
+}
+
+func EndMatch(matchID int64, endTime time.Time, winner int64) error {
+	match, err := GetMatch(matchID)
+	if err != nil {
+		return err
+	}
+
+	match.Status = "finished"
+	match.EndTime = endTime
+	match.Winner = winner
+
+	return updateMatchInDatabase(match)
 }

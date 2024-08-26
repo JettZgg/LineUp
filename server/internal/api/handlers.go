@@ -78,6 +78,13 @@ func CreateMatchHandler(c *gin.Context) {
             "username": player.Username,
         },
     })
+
+    // Create a new room in the WebSocket hub
+    hub := c.MustGet("hub").(*websocket.Hub)
+    hub.Rooms[match.MID] = &websocket.Room{
+        ID:      match.MID,
+        Clients: make(map[*websocket.Client]bool),
+    }
 }
 
 func JoinMatchHandler(c *gin.Context) {
@@ -99,37 +106,6 @@ func JoinMatchHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Joined match successfully"})
-}
-
-func MakeMoveHandler(c *gin.Context) {
-	matchID, err := strconv.ParseInt(c.Param("matchID"), 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid match ID"})
-		return
-	}
-	uid := c.GetInt64("uid")
-
-	var moveRequest struct {
-		X int `json:"x"`
-		Y int `json:"y"`
-	}
-	if err := c.ShouldBindJSON(&moveRequest); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
-		return
-	}
-
-	hub := c.MustGet("hub").(*websocket.Hub)
-	broadcastFunc := func(matchID int64, message []byte) {
-		hub.BroadcastToMatch(matchID, message)
-	}
-
-	result, err := game.MakeMove(broadcastFunc, matchID, uid, moveRequest.X, moveRequest.Y)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid move"})
-		return
-	}
-
-	c.JSON(http.StatusOK, result)
 }
 
 func GetMatchHandler(c *gin.Context) {

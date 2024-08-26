@@ -30,7 +30,6 @@ func SetupRoutes(r *gin.Engine) {
 		// Match-related routes
 		auth.POST("/create-match", CreateMatchHandler)
 		auth.POST("/join-match/:matchID", JoinMatchHandler)
-		auth.POST("/make-move/:matchID", MakeMoveHandler)
 		auth.GET("/match/:matchID", GetMatchHandler)
 		auth.GET("/match-history", GetMatchHistoryHandler)
 		auth.GET("/match-replay/:matchID", GetMatchReplayHandler)

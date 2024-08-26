@@ -29,63 +29,80 @@ var (
 )
 
 type Client struct {
-    hub     *Hub
-    conn    *websocket.Conn
-    send    chan []byte
-    matchID int64
+	hub    *Hub
+	conn   *websocket.Conn
+	send   chan []byte
+	roomID int64
 }
 
 func (c *Client) readPump() {
-    defer func() {
-        c.hub.unregister <- c
-        c.conn.Close()
-    }()
-    c.conn.SetReadLimit(maxMessageSize)
-    c.conn.SetReadDeadline(time.Now().Add(pongWait))
-    c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-    for {
-        _, message, err := c.conn.ReadMessage()
-        if err != nil {
-            if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-                log.Printf("error: %v", err)
-            }
-            break
-        }
-        var msg map[string]interface{}
-        if err := json.Unmarshal(message, &msg); err != nil {
-            log.Printf("error unmarshaling message: %v", err)
-            continue
-        }
-        
-        switch msg["type"] {
-        case "getGameInfo":
-            matchID := int64(msg["matchId"].(float64))
-            gameInfo, err := game.GetGameInfo(matchID)
-            if err != nil {
-                log.Printf("Error getting game info: %v", err)
-                continue
-            }
-            response, _ := json.Marshal(gameInfo)
-            c.send <- response
-        case "updateConfig":
-            matchID := int64(msg["matchId"].(float64))
-            userID := int64(msg["userId"].(float64))
-            var config game.MatchConfig
-            configData, _ := json.Marshal(msg["config"])
-            json.Unmarshal(configData, &config)
-            if err := game.UpdateGameConfig(c.hub.BroadcastToMatch, matchID, userID, config); err != nil {
-                log.Printf("Error updating game config: %v", err)
-                continue
-            }
-        case "startMatch":
-            matchID := int64(msg["matchId"].(float64))
-            userID := int64(msg["userId"].(float64))
-            if err := game.StartMatch(c.hub.BroadcastToMatch, matchID, userID); err != nil {
-                log.Printf("Error starting match: %v", err)
-                continue
-            }
-        }
-    }
+	defer func() {
+		c.hub.Unregister <- c
+		c.conn.Close()
+	}()
+	c.conn.SetReadLimit(maxMessageSize)
+	c.conn.SetReadDeadline(time.Now().Add(pongWait))
+	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	for {
+		_, message, err := c.conn.ReadMessage()
+		if err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				log.Printf("error: %v", err)
+			}
+			break
+		}
+		var msg map[string]interface{}
+		if err := json.Unmarshal(message, &msg); err != nil {
+			log.Printf("error unmarshaling message: %v", err)
+			continue
+		}
+		
+		switch msg["type"] {
+		case "getGameInfo":
+			matchID := int64(msg["matchId"].(float64))
+			gameInfo, err := game.GetGameInfo(matchID)
+			if err != nil {
+				log.Printf("Error getting game info: %v", err)
+				continue
+			}
+			response, _ := json.Marshal(gameInfo)
+			c.send <- response
+		case "updateConfig":
+			matchID := int64(msg["matchId"].(float64))
+			userID := int64(msg["userId"].(float64))
+			var config game.MatchConfig
+			configData, _ := json.Marshal(msg["config"])
+			json.Unmarshal(configData, &config)
+			if err := game.UpdateGameConfig(c.hub.BroadcastToMatch, matchID, userID, config); err != nil {
+				log.Printf("Error updating game config: %v", err)
+				continue
+			}
+		case "startMatch":
+			matchID := int64(msg["matchId"].(float64))
+			userID := int64(msg["userId"].(float64))
+			if err := game.StartMatch(c.hub.BroadcastToMatch, matchID, userID); err != nil {
+				log.Printf("Error starting match: %v", err)
+				continue
+			}
+		case "makeMove":
+			matchID := int64(msg["matchId"].(float64))
+			userID := int64(msg["userId"].(float64))
+			x := int(msg["x"].(float64))
+			y := int(msg["y"].(float64))
+			result, err := game.MakeMove(c.hub.BroadcastToMatch, matchID, userID, x, y)
+			if err != nil {
+				log.Printf("Error making move: %v", err)
+				errorMsg := map[string]interface{}{
+					"type":  "error",
+					"error": err.Error(),
+				}
+				errorJSON, _ := json.Marshal(errorMsg)
+				c.send <- errorJSON
+			} else {
+				c.hub.BroadcastToMatch(matchID, result)
+			}
+		}
+	}
 }
 
 func (c *Client) writePump() {

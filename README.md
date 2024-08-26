@@ -67,7 +67,7 @@ A customizable Gomoku game
 ```bash
 cd server
 go mod tidy # only run this when it's first time
-go run cmd/server/main.go
+make
 ```
 
 ### client

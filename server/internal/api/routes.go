@@ -1,18 +1,14 @@
-// File: internal/api/routes.go
 package api
 
 import (
-	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/JettZgg/LineUp/internal/middleware"
-	"github.com/JettZgg/LineUp/internal/utils/websocket"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRoutes(r *gin.Engine, hub *websocket.Hub) {
+func SetupRoutes(r *gin.Engine) {
 	// CORS configuration
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173"}, // Update this with your client's URL
@@ -22,12 +18,6 @@ func SetupRoutes(r *gin.Engine, hub *websocket.Hub) {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
-
-	// Middleware to set hub in context
-	r.Use(func(c *gin.Context) {
-		c.Set("hub", hub)
-		c.Next()
-	})
 
 	// Public routes
 	r.POST("/api/register", RegisterHandler)
@@ -47,14 +37,4 @@ func SetupRoutes(r *gin.Engine, hub *websocket.Hub) {
 
 		// Add any other authenticated routes here
 	}
-
-	// WebSocket route
-	r.GET("/ws/:matchID", func(c *gin.Context) {
-		matchID, err := strconv.ParseInt(c.Param("matchID"), 10, 64)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid match ID"})
-			return
-		}
-		websocket.ServeWs(hub, c.Writer, c.Request, matchID)
-	})
 }

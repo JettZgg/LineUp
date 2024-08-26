@@ -25,3 +25,7 @@ game:
   min_board_size: 3
   max_win_length: 19
   min_win_length: 3
+
+# WebSocket configuration
+websocket:
+  port: 8081

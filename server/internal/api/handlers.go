@@ -10,7 +10,7 @@ import (
 	"github.com/JettZgg/LineUp/internal/auth"
 	"github.com/JettZgg/LineUp/internal/db"
 	"github.com/JettZgg/LineUp/internal/game"
-	"github.com/JettZgg/LineUp/internal/utils/websocket"
+	"github.com/JettZgg/LineUp/internal/websocket"
 	"github.com/gin-gonic/gin"
 )
 

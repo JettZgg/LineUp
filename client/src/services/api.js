@@ -1,10 +1,8 @@
-// src/services/api.js
 import axios from 'axios';
-
-const API_URL = 'http://localhost:8080/api'; // Update with your server URL
+import { API_BASE_URL } from '../config';
 
 const api = axios.create({
-    baseURL: API_URL,
+    baseURL: API_BASE_URL,
 });
 
 api.interceptors.request.use((config) => {

@@ -1,7 +1,6 @@
-// src/services/websocket.js
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { WS_BASE_URL } from '../config';
 
-const WS_URL = 'ws://localhost:8080/ws'; // Update with your WebSocket server URL
 const MAX_RETRIES = 5;
 const INITIAL_RETRY_DELAY = 1000; // 1 second
 const INITIAL_CONNECTION_DELAY = 500; // 500ms delay before first connection attempt
@@ -21,7 +20,7 @@ export const useWebSocket = (matchId, user) => {
             return;
         }
 
-        const ws = new WebSocket(`${WS_URL}/${matchId}`);
+        const ws = new WebSocket(`${WS_BASE_URL}/${matchId}`);
 
         ws.onopen = () => {
             console.log('WebSocket connected');

@@ -5,10 +5,11 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	JWT      JWTConfig
-	Game     GameConfig
+	Server    ServerConfig
+	Database  DatabaseConfig
+	JWT       JWTConfig
+	Game      GameConfig
+	WebSocket WebSocketConfig
 }
 
 type ServerConfig struct {
@@ -37,6 +38,10 @@ type GameConfig struct {
 	MinBoardSize       int
 	MaxWinLength       int
 	MinWinLength       int
+}
+
+type WebSocketConfig struct {
+	Port string
 }
 
 func Load() (*Config, error) {

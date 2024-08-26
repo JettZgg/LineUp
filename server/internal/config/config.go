@@ -8,7 +8,6 @@ type Config struct {
 	Server    ServerConfig
 	Database  DatabaseConfig
 	JWT       JWTConfig
-	Game      GameConfig
 	WebSocket WebSocketConfig
 }
 
@@ -28,16 +27,6 @@ type DatabaseConfig struct {
 type JWTConfig struct {
 	Secret     string
 	Expiration string
-}
-
-type GameConfig struct {
-	DefaultBoardWidth  int
-	DefaultBoardHeight int
-	DefaultWinLength   int
-	MaxBoardSize       int
-	MinBoardSize       int
-	MaxWinLength       int
-	MinWinLength       int
 }
 
 type WebSocketConfig struct {

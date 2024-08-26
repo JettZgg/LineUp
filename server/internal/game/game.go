@@ -6,31 +6,18 @@ import (
 	"fmt"
 	"log"
 	"strconv"
-	"time"
 
 	"github.com/JettZgg/LineUp/internal/db"
 )
 
-type MatchConfig struct {
-	BoardWidth  int `json:"boardWidth"`
-	BoardHeight int `json:"boardHeight"`
-	WinLength   int `json:"winLength"`
-}
-
 type Match struct {
-	MID               int64       `json:"id"`
-	Board             [][]string  `json:"board"`
-	Player1ID         int64       `json:"player1Id"`
-	Player2ID         int64       `json:"player2Id"`
-	Status            string      `json:"status"`
-	Config            MatchConfig `json:"config"`
-	StartTime         time.Time   `json:"startTime"`
-	EndTime           time.Time   `json:"endTime"`
-	Winner            int64       `json:"winner"`
-	FirstMovePlayerID int64       `json:"firstMovePlayerId"`
-	Moves             []db.Move   `json:"moves"`
-	Player1Ready      bool        `json:"player1Ready"`
-	Player2Ready      bool        `json:"player2Ready"`
+	MID               int64  `json:"id"`
+	Player1ID         int64  `json:"player1Id"`
+	Player2ID         int64  `json:"player2Id"`
+	Winner            int64  `json:"winner"`
+	FirstMovePlayerID int64  `json:"firstMovePlayerId"`
+	Moves             string `json:"moves"`
+	Date              string `json:"date"`
 }
 
 func (m Match) MarshalJSON() ([]byte, error) {
@@ -65,103 +52,125 @@ func GetMatch(matchID int64) (*Match, error) {
 			MID:               dbMatch.MID,
 			Player1ID:         dbMatch.Player1ID,
 			Player2ID:         dbMatch.Player2ID,
-			Status:            dbMatch.Status,
-			StartTime:         dbMatch.StartTime,
+			Winner:            dbMatch.Winner,
 			FirstMovePlayerID: dbMatch.FirstMovePlayerID,
-			Config: MatchConfig{
-				BoardWidth:  dbMatch.BoardWidth,
-				BoardHeight: dbMatch.BoardHeight,
-				WinLength:   dbMatch.WinLength,
-			},
-			Board: makeBoard(dbMatch.BoardWidth, dbMatch.BoardHeight),
-			Moves: dbMatch.Moves,
+			Moves:             dbMatch.Moves,
+			Date:              dbMatch.Date,
 		}
 		matches[matchID] = match
 	}
 	return match, nil
 }
 
-func MakeMove(broadcastFunc func(int64, []byte), matchID int64, playerID int64, x, y int) ([]byte, error) {
-    match, err := GetMatch(matchID)
-    if err != nil {
-        return nil, err
-    }
-    if match.Status != "ongoing" {
-        return nil, errors.New("match is not ongoing")
-    }
-    if (match.Player1ID != playerID && match.Player2ID != playerID) || (match.Board[y][x] != "") {
-        return nil, errors.New("invalid move")
-    }
-
-    symbol := "X"
-    if playerID == match.Player2ID {
-        symbol = "O"
-    }
-    match.Board[y][x] = symbol
-
-    // Add the move to the match's Moves slice
-    move := db.Move{X: x, Y: y}
-    match.Moves = append(match.Moves, move)
-
-    result := checkGameResult(match, x, y)
-
-    // Create a message to broadcast
-    updateMsg := map[string]interface{}{
-        "type":    "moveUpdate",
-        "matchID": matchID,
-        "board":   match.Board,
-        "result":  result,
-        "lastMove": map[string]interface{}{
-            "playerID": playerID,
-            "x":        x,
-            "y":        y,
-        },
-    }
-
-    msgBytes, err := json.Marshal(updateMsg)
-    if err != nil {
-        return nil, fmt.Errorf("failed to marshal move update: %w", err)
-    }
-
-    if result["result"] != "ongoing" {
-        match.Status = "finished"
-        match.EndTime = time.Now()
-        match.Winner = playerID
-        if result["result"] == "draw" {
-            match.Winner = -1 // Use -1 to indicate a draw
-        }
-        if err := updateMatchInDatabase(match); err != nil {
-            log.Printf("Failed to update match in database: %v", err)
-        }
-        delete(matches, matchID) // Remove finished game from memory
-    }
-
-    return msgBytes, nil
-}
-
-func UpdateMatchConfig(broadcastFunc func(int64, []byte), matchID int64, playerID int64, config MatchConfig) error {
-	match, exists := matches[matchID]
-	if !exists {
-		return errors.New("match not found")
+func MakeMove(broadcastFunc func(int64, []byte), matchID int64, playerID int64, move string) ([]byte, error) {
+	match, err := GetMatch(matchID)
+	if err != nil {
+		return nil, err
 	}
-	if match.Player1ID != playerID {
-		return errors.New("only the match owner can update the configuration")
+	if match.Winner != 0 {
+		return nil, errors.New("match is already finished")
+	}
+	if match.Player1ID != playerID && match.Player2ID != playerID {
+		return nil, errors.New("invalid player")
 	}
 
-	match.Config = config
+	match.Moves += move
 
-	return broadcastGameInfo(broadcastFunc, matchID)
+	// Check for win condition (implement this function based on Gomoku rules)
+	if checkWin(match.Moves) {
+		match.Winner = playerID
+	}
+
+	// Create a message to broadcast
+	updateMsg := map[string]interface{}{
+		"type":    "moveUpdate",
+		"matchID": matchID,
+		"moves":   match.Moves,
+		"lastMove": map[string]interface{}{
+			"playerID": playerID,
+			"move":     move,
+		},
+	}
+
+	if match.Winner != 0 {
+		updateMsg["winner"] = match.Winner
+	}
+
+	msgBytes, err := json.Marshal(updateMsg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal move update: %w", err)
+	}
+
+	if err := updateMatchInDatabase(match); err != nil {
+		log.Printf("Failed to update match in database: %v", err)
+	}
+
+	return msgBytes, nil
 }
 
-func EndMatch(matchID int64, endTime time.Time, winner int64) error {
+func EndMatch(matchID int64, winner int64) error {
 	match, err := GetMatch(matchID)
 	if err != nil {
 		return err
 	}
 
-	match.Status = "finished"
-	match.EndTime = endTime
 	match.Winner = winner
 
 	return updateMatchInDatabase(match)
+}
+
+func checkWin(moves string) bool {
+	board := make([][]rune, 15)
+	for i := range board {
+		board[i] = make([]rune, 15)
+	}
+
+	// Fill the board with moves
+	for i := 0; i < len(moves); i += 3 {
+		if i+2 >= len(moves) {
+			break
+		}
+		col := int(moves[i] - 'a')
+		row, err := strconv.Atoi(moves[i+1 : i+3])
+		if err != nil {
+			log.Printf("Error parsing row number: %v", err)
+			continue
+		}
+		row = 15 - row // Invert the row number
+		if row < 0 || row >= 15 || col < 0 || col >= 15 {
+			log.Printf("Invalid move: %s", moves[i:i+3])
+			continue
+		}
+		if i/3%2 == 0 {
+			board[row][col] = 'X'
+		} else {
+			board[row][col] = 'O'
+		}
+	}
+
+	// Check for 5 in a row
+	for i := 0; i < 15; i++ {
+		for j := 0; j < 15; j++ {
+			if board[i][j] == 0 {
+				continue
+			}
+			// Check horizontal
+			if j <= 10 && board[i][j] == board[i][j+1] && board[i][j] == board[i][j+2] && board[i][j] == board[i][j+3] && board[i][j] == board[i][j+4] {
+				return true
+			}
+			// Check vertical
+			if i <= 10 && board[i][j] == board[i+1][j] && board[i][j] == board[i+2][j] && board[i][j] == board[i+3][j] && board[i][j] == board[i+4][j] {
+				return true
+			}
+			// Check diagonal (top-left to bottom-right)
+			if i <= 10 && j <= 10 && board[i][j] == board[i+1][j+1] && board[i][j] == board[i+2][j+2] && board[i][j] == board[i+3][j+3] && board[i][j] == board[i+4][j+4] {
+				return true
+			}
+			// Check diagonal (top-right to bottom-left)
+			if i <= 10 && j >= 4 && board[i][j] == board[i+1][j-1] && board[i][j] == board[i+2][j-2] && board[i][j] == board[i+3][j-3] && board[i][j] == board[i+4][j-4] {
+				return true
+			}
+		}
+	}
+	return false
 }

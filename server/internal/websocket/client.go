@@ -67,16 +67,6 @@ func (c *Client) readPump() {
 			}
 			response, _ := json.Marshal(gameInfo)
 			c.send <- response
-		case "updateConfig":
-			matchID := int64(msg["matchId"].(float64))
-			userID := int64(msg["userId"].(float64))
-			var config game.MatchConfig
-			configData, _ := json.Marshal(msg["config"])
-			json.Unmarshal(configData, &config)
-			if err := game.UpdateGameConfig(c.hub.BroadcastToMatch, matchID, userID, config); err != nil {
-				log.Printf("Error updating game config: %v", err)
-				continue
-			}
 		case "startMatch":
 			matchID := int64(msg["matchId"].(float64))
 			userID := int64(msg["userId"].(float64))
@@ -87,9 +77,8 @@ func (c *Client) readPump() {
 		case "makeMove":
 			matchID := int64(msg["matchId"].(float64))
 			userID := int64(msg["userId"].(float64))
-			x := int(msg["x"].(float64))
-			y := int(msg["y"].(float64))
-			result, err := game.MakeMove(c.hub.BroadcastToMatch, matchID, userID, x, y)
+			move := msg["move"].(string)
+			result, err := game.MakeMove(c.hub.BroadcastToMatch, matchID, userID, move)
 			if err != nil {
 				log.Printf("Error making move: %v", err)
 				errorMsg := map[string]interface{}{

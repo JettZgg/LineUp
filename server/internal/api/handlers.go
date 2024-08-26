@@ -30,61 +30,55 @@ func RegisterHandler(c *gin.Context) {
 }
 
 func LoginHandler(c *gin.Context) {
-    var credentials struct {
-        Username string `json:"username"`
-        Password string `json:"password"`
-    }
-    if err := c.ShouldBindJSON(&credentials); err != nil {
-        log.Printf("Error binding JSON: %v", err)
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
-        return
-    }
+	var credentials struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	if err := c.ShouldBindJSON(&credentials); err != nil {
+		log.Printf("Error binding JSON: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
 
-    user, token, err := auth.LoginUser(credentials.Username, credentials.Password)
-    if err != nil {
-        log.Printf("Login error for user %s: %v", credentials.Username, err)
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
-        return
-    }
+	user, token, err := auth.LoginUser(credentials.Username, credentials.Password)
+	if err != nil {
+		log.Printf("Login error for user %s: %v", credentials.Username, err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		return
+	}
 
-    c.JSON(http.StatusOK, gin.H{"token": token, "userID": user.UID, "username": user.Username})
+	c.JSON(http.StatusOK, gin.H{"token": token, "userID": user.UID, "username": user.Username})
 }
 
 func CreateMatchHandler(c *gin.Context) {
-    uid := c.GetInt64("uid")
+	uid := c.GetInt64("uid")
 
-    config := game.MatchConfig{
-        BoardWidth:  10, // Default values
-        BoardHeight: 10,
-        WinLength:   5,
-    }
+	match, err := game.CreateMatch(uid)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-    match, err := game.CreateMatch(uid, config)
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-        return
-    }
+	player, err := db.GetUserByID(uid)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get player info"})
+		return
+	}
 
-    player, err := db.GetUserByID(uid)
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get player info"})
-        return
-    }
+	c.JSON(http.StatusOK, gin.H{
+		"match": match,
+		"player": gin.H{
+			"id":       strconv.FormatInt(player.UID, 10),
+			"username": player.Username,
+		},
+	})
 
-    c.JSON(http.StatusOK, gin.H{
-        "match": match,
-        "player": gin.H{
-            "id": strconv.FormatInt(player.UID, 10),
-            "username": player.Username,
-        },
-    })
-
-    // Create a new room in the WebSocket hub
-    hub := c.MustGet("hub").(*websocket.Hub)
-    hub.Rooms[match.MID] = &websocket.Room{
-        ID:      match.MID,
-        Clients: make(map[*websocket.Client]bool),
-    }
+	// Create a new room in the WebSocket hub
+	hub := c.MustGet("hub").(*websocket.Hub)
+	hub.Rooms[match.MID] = &websocket.Room{
+		ID:      match.MID,
+		Clients: make(map[*websocket.Client]bool),
+	}
 }
 
 func JoinMatchHandler(c *gin.Context) {

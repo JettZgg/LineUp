@@ -21,7 +21,10 @@ const StyledBox = styled(Box)(({ theme }) => ({
 const MatchRoom = () => {
     const { matchId } = useParams();
     const { user } = useAuth();
-    const [players, setPlayers] = useState([]);
+    const [players, setPlayers] = useState([
+        { id: user.userID, username: user.username },
+        { id: null, username: 'Waiting' }
+    ]);
     const [matchStarted, setMatchStarted] = useState(false);
     const { sendMessage, lastMessage, isConnected } = useWebSocket(matchId, user);
 
@@ -29,12 +32,26 @@ const MatchRoom = () => {
         if (lastMessage) {
             const { type, players: updatedPlayers, matchStarted } = lastMessage;
             if (['matchInfo', 'playerJoined', 'playerLeft'].includes(type)) {
-                if (updatedPlayers) setPlayers(updatedPlayers);
+                if (updatedPlayers) {
+                    setPlayers(prevPlayers => {
+                        const newPlayers = [...prevPlayers];
+                        updatedPlayers.forEach((player, index) => {
+                            newPlayers[index] = player;
+                        });
+                        return newPlayers;
+                    });
+                }
             } else if (type === 'matchStart') {
                 setMatchStarted(true);
             }
         }
     }, [lastMessage]);
+
+    useEffect(() => {
+        if (isConnected) {
+            sendMessage({ type: 'getGameInfo', matchId });
+        }
+    }, [isConnected, matchId, sendMessage]);
 
     const handleStart = () => {
         sendMessage({ type: 'startMatch', matchId, token: user.token });

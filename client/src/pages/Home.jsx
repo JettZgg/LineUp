@@ -52,7 +52,6 @@ const Home = () => {
             }
         } catch (error) {
             console.error('Failed to create match:', error);
-            // You might want to show an error message to the user here
         }
     };
 

@@ -13,11 +13,12 @@ const MatchInfo = ({ matchId, players, onCopyMatchId }) => {
                     <ContentCopyIcon />
                 </IconButton>
             </Box>
-            {players.map((player, index) => (
-                <Typography key={player.id} variant="body1" sx={{ fontWeight: 600, marginBottom: '0.5rem' }}>
-                    Player{index + 1}: {player.username}
-                </Typography>
-            ))}
+            <Typography variant="body1" sx={{ fontWeight: 600, marginBottom: '0.5rem' }}>
+                Player1: {players[0] ? players[0].username : 'Waiting'}
+            </Typography>
+            <Typography variant="body1" sx={{ fontWeight: 600, marginBottom: '0.5rem' }}>
+                Player2: {players[1] ? players[1].username : 'Waiting'}
+            </Typography>
         </Box>
     );
 };

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"database/sql"
 )
 
 type Move struct {
@@ -58,15 +59,28 @@ func GetMatchByID(matchID int64) (*Match, error) {
         return nil, errors.New("database connection is not initialized")
     }
     match := &Match{}
+    var player2ID, winner sql.NullInt64
+    var moves sql.NullString
     err := DB.QueryRow(`
         SELECT id, player1_id, player2_id, winner, first_move_player_id, moves, date
         FROM matches WHERE id = $1
     `, matchID).Scan(
-        &match.MID, &match.Player1ID, &match.Player2ID, &match.Winner,
-        &match.FirstMovePlayerID, &match.Moves, &match.Date,
+        &match.MID, &match.Player1ID, &player2ID, &winner,
+        &match.FirstMovePlayerID, &moves, &match.Date,
     )
     if err != nil {
-        return nil, err
+        return nil, fmt.Errorf("match not found: %w", err)
+    }
+    if player2ID.Valid {
+        match.Player2ID = player2ID.Int64
+    }
+    if winner.Valid {
+        match.Winner = winner.Int64
+    }
+    if moves.Valid {
+        match.Moves = moves.String
+    } else {
+        match.Moves = ""
     }
     return match, nil
 }

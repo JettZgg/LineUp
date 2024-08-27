@@ -39,13 +39,29 @@ func CreateMatch(playerID int64) (*Match, error) {
 func JoinMatch(broadcastFunc func(int64, []byte), matchID int64, playerID int64) error {
 	match, exists := matches[matchID]
 	if !exists {
-		return errors.New("match not found")
+		// If the match is not in memory, try to fetch it from the database
+		dbMatch, err := db.GetMatchByID(matchID)
+		if err != nil {
+			return fmt.Errorf("match not found: %w", err)
+		}
+		match = &Match{
+			MID:               dbMatch.MID,
+			Player1ID:         dbMatch.Player1ID,
+			Player2ID:         dbMatch.Player2ID,
+			FirstMovePlayerID: dbMatch.FirstMovePlayerID,
+			Winner:            dbMatch.Winner,
+			Moves:             dbMatch.Moves,
+			Date:              dbMatch.Date,
+		}
+		matches[matchID] = match
 	}
 
 	if match.Player1ID == 0 {
 		match.Player1ID = playerID
 	} else if match.Player2ID == 0 && match.Player1ID != playerID {
 		match.Player2ID = playerID
+	} else {
+		return errors.New("match is full or player already joined")
 	}
 
 	dbMatch := &db.Match{

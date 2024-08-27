@@ -8,7 +8,7 @@ import (
 	"github.com/JettZgg/LineUp/internal/db"
 )
 
-func GetGameInfo(matchID int64) (map[string]interface{}, error) {
+func GetMatchInfo(matchID int64) (map[string]interface{}, error) {
 	match, err := GetMatch(matchID)
 	if err != nil {
 		log.Printf("Error getting match %d: %v", matchID, err)
@@ -53,8 +53,8 @@ func GetGameInfo(matchID int64) (map[string]interface{}, error) {
 	}, nil
 }
 
-func broadcastGameInfo(broadcastFunc func(int64, []byte), matchID int64) error {
-	gameInfo, err := GetGameInfo(matchID)
+func broadcastMatchInfo(broadcastFunc func(int64, []byte), matchID int64) error {
+	gameInfo, err := GetMatchInfo(matchID)
 	if err != nil {
 		return fmt.Errorf("failed to get game info: %w", err)
 	}

@@ -60,7 +60,7 @@ func JoinMatch(broadcastFunc func(int64, []byte), matchID int64, playerID int64)
 
 	log.Printf("Player %d joined match %d", playerID, matchID)
 
-	return broadcastGameInfo(broadcastFunc, matchID)
+	return broadcastMatchInfo(broadcastFunc, matchID)
 }
 
 func GetMatchHistory(userID int64, limit int) ([]db.Match, error) {
@@ -96,7 +96,7 @@ func LeaveMatch(broadcastFunc func(int64, []byte), matchID int64, playerID int64
 		return fmt.Errorf("failed to update match in database: %w", err)
 	}
 
-	gameInfo, err := GetGameInfo(matchID)
+	gameInfo, err := GetMatchInfo(matchID)
 	if err != nil {
 		return fmt.Errorf("failed to get game info: %w", err)
 	}

@@ -33,7 +33,7 @@ func StartMatch(broadcastFunc func(int64, []byte), matchID int64, playerID int64
 		return fmt.Errorf("failed to update match in database: %w", err)
 	}
 
-	return broadcastGameInfo(broadcastFunc, matchID)
+	return broadcastMatchInfo(broadcastFunc, matchID)
 }
 
 func determineFirstPlayer(player1ID, player2ID int64) int64 {

@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/JettZgg/LineUp/internal/game"
+	game "github.com/JettZgg/LineUp/internal/match"
 	"github.com/gorilla/websocket"
 )
 
@@ -56,13 +56,13 @@ func (c *Client) readPump() {
 			log.Printf("error unmarshaling message: %v", err)
 			continue
 		}
-		
+
 		switch msg["type"] {
 		case "getGameInfo":
 			matchID := int64(msg["matchId"].(float64))
-			gameInfo, err := game.GetGameInfo(matchID)
+			gameInfo, err := game.GetMatchInfo(matchID)
 			if err != nil {
-				log.Printf("Error getting game info: %v", err)
+				log.Printf("Error getting match info: %v", err)
 				continue
 			}
 			response, _ := json.Marshal(gameInfo)

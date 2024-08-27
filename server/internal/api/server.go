@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/JettZgg/LineUp/internal/config"
-	"github.com/JettZgg/LineUp/internal/db"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,10 +13,6 @@ type Server struct {
 }
 
 func New(cfg *config.Config) *Server {
-	if err := db.Initialize(cfg.Database); err != nil {
-		panic(fmt.Errorf("failed to initialize database: %w", err))
-	}
-
 	router := gin.Default()
 	SetupRoutes(router)
 

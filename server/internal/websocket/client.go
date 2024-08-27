@@ -4,6 +4,7 @@ package websocket
 import (
 	"encoding/json"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/JettZgg/LineUp/internal/match"
@@ -53,14 +54,27 @@ func (c *Client) readPump() {
 		}
 		var msg map[string]interface{}
 		if err := json.Unmarshal(message, &msg); err != nil {
-			log.Printf("error unmarshaling message: %v", err)
+			log.Printf("Error unmarshaling message: %v", err)
 			continue
 		}
 
 		switch msg["type"] {
 		case "getMatchInfo":
-			matchID := int64(msg["matchId"].(float64))
-			matchInfo, err := match.GetMatchInfo(matchID)
+			var matchIDInt int64
+			switch v := msg["matchId"].(type) {
+			case string:
+				matchIDInt, err = strconv.ParseInt(v, 10, 64)
+				if err != nil {
+					log.Printf("Error parsing matchId: %v", err)
+					continue
+				}
+			case float64:
+				matchIDInt = int64(v)
+			default:
+				log.Printf("Invalid matchId type")
+				continue
+			}
+			matchInfo, err := match.GetMatchInfo(matchIDInt)
 			if err != nil {
 				log.Printf("Error getting match info: %v", err)
 				continue
@@ -68,15 +82,15 @@ func (c *Client) readPump() {
 			response, _ := json.Marshal(matchInfo)
 			c.send <- response
 		case "startMatch":
-			matchID := int64(msg["matchId"].(float64))
-			userID := int64(msg["userId"].(float64))
+			matchID := getInt64(msg["matchId"])
+			userID := getInt64(msg["userId"])
 			if err := match.StartMatch(c.hub.BroadcastToMatch, matchID, userID); err != nil {
 				log.Printf("Error starting match: %v", err)
 				continue
 			}
 		case "makeMove":
-			matchID := int64(msg["matchId"].(float64))
-			userID := int64(msg["userId"].(float64))
+			matchID := getInt64(msg["matchId"])
+			userID := getInt64(msg["userId"])
 			move := msg["move"].(string)
 			result, err := match.MakeMove(c.hub.BroadcastToMatch, matchID, userID, move)
 			if err != nil {
@@ -132,5 +146,17 @@ func (c *Client) writePump() {
 				return
 			}
 		}
+	}
+}
+
+func getInt64(v interface{}) int64 {
+	switch i := v.(type) {
+	case float64:
+		return int64(i)
+	case string:
+		j, _ := strconv.ParseInt(i, 10, 64)
+		return j
+	default:
+		return 0
 	}
 }

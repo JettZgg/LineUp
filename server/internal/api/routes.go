@@ -2,13 +2,25 @@ package api
 
 import (
 	"time"
+	"strconv"
 
 	"github.com/JettZgg/LineUp/internal/middleware"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/JettZgg/LineUp/internal/websocket"
 )
 
 func SetupRoutes(r *gin.Engine) {
+	// Create a new hub
+	hub := websocket.NewHub()
+	go hub.Run()
+
+	// Middleware to add hub to context
+	r.Use(func(c *gin.Context) {
+		c.Set("hub", hub)
+		c.Next()
+	})
+
 	// CORS configuration
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173"}, // Update this with your client's URL
@@ -22,6 +34,12 @@ func SetupRoutes(r *gin.Engine) {
 	// Public routes
 	r.POST("/api/register", RegisterHandler)
 	r.POST("/api/login", LoginHandler)
+
+	// WebSocket route
+	r.GET("/ws/:matchID", func(c *gin.Context) {
+		matchID, _ := strconv.ParseInt(c.Param("matchID"), 10, 64)
+		websocket.ServeWs(hub, c.Writer, c.Request, matchID)
+	})
 
 	// Authenticated routes
 	auth := r.Group("/api")

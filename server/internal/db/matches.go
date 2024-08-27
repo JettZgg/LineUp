@@ -54,6 +54,9 @@ func UpdateMatch(match *Match) error {
 }
 
 func GetMatchByID(matchID int64) (*Match, error) {
+    if DB == nil {
+        return nil, errors.New("database connection is not initialized")
+    }
     match := &Match{}
     err := DB.QueryRow(`
         SELECT id, player1_id, player2_id, winner, first_move_player_id, moves, date

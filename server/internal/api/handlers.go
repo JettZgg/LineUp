@@ -47,7 +47,7 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": token, "userID": user.UID, "username": user.Username})
+	c.JSON(http.StatusOK, gin.H{"token": token, "userID": strconv.FormatInt(user.UID, 10), "username": user.Username})
 }
 
 func CreateMatchHandler(c *gin.Context) {

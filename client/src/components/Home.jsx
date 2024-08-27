@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Typography, Box, Button } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { useAuth } from '../components/common/AuthContext';
+import { useAuth } from './common/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { createMatch } from '../services/api';
-import JoinMatchModal from '../components/Match/JoinMatchModal';
-import PageLayout from '../components/layout/PageLayout';
+import JoinMatchModal from './Match/JoinMatchModal';
+import PageLayout from './layout/PageLayout';
 
 const StyledButton = styled(Button)(({ theme }) => ({
     backgroundColor: '#DCC2C2',
@@ -43,7 +43,7 @@ const Home = () => {
 
     const handlePlay = async () => {
         try {
-            const response = await createMatch(user.token);
+            const response = await createMatch();
             if (response && response.data && response.data.match && response.data.match.id) {
                 const matchId = response.data.match.id;
                 navigate(`/match/${matchId}`);
@@ -52,7 +52,6 @@ const Home = () => {
             }
         } catch (error) {
             console.error('Failed to create match:', error);
-            // You might want to show an error message to the user here
         }
     };
 
@@ -71,7 +70,7 @@ const Home = () => {
                 Username: {user.username}
             </Typography>
             <Typography variant="body1" sx={{ marginBottom: '2rem' }}>
-                UID: {user.userID}
+                UID: {user.userID.toString()}
             </Typography>
             <StyledButton onClick={handlePlay}>Play</StyledButton>
             <StyledButton onClick={handleJoin}>Join</StyledButton>

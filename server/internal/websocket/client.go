@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	game "github.com/JettZgg/LineUp/internal/match"
+	"github.com/JettZgg/LineUp/internal/match"
 	"github.com/gorilla/websocket"
 )
 
@@ -58,19 +58,19 @@ func (c *Client) readPump() {
 		}
 
 		switch msg["type"] {
-		case "getGameInfo":
+		case "getMatchInfo":
 			matchID := int64(msg["matchId"].(float64))
-			gameInfo, err := game.GetMatchInfo(matchID)
+			matchInfo, err := match.GetMatchInfo(matchID)
 			if err != nil {
 				log.Printf("Error getting match info: %v", err)
 				continue
 			}
-			response, _ := json.Marshal(gameInfo)
+			response, _ := json.Marshal(matchInfo)
 			c.send <- response
 		case "startMatch":
 			matchID := int64(msg["matchId"].(float64))
 			userID := int64(msg["userId"].(float64))
-			if err := game.StartMatch(c.hub.BroadcastToMatch, matchID, userID); err != nil {
+			if err := match.StartMatch(c.hub.BroadcastToMatch, matchID, userID); err != nil {
 				log.Printf("Error starting match: %v", err)
 				continue
 			}
@@ -78,7 +78,7 @@ func (c *Client) readPump() {
 			matchID := int64(msg["matchId"].(float64))
 			userID := int64(msg["userId"].(float64))
 			move := msg["move"].(string)
-			result, err := game.MakeMove(c.hub.BroadcastToMatch, matchID, userID, move)
+			result, err := match.MakeMove(c.hub.BroadcastToMatch, matchID, userID, move)
 			if err != nil {
 				log.Printf("Error making move: %v", err)
 				errorMsg := map[string]interface{}{

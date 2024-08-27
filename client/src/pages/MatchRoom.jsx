@@ -49,7 +49,7 @@ const MatchRoom = () => {
 
     useEffect(() => {
         if (isConnected) {
-            sendMessage({ type: 'getGameInfo', matchId });
+            sendMessage({ type: 'getMatchInfo', matchId });
         }
     }, [isConnected, matchId, sendMessage]);
 

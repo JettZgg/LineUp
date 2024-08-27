@@ -1,4 +1,4 @@
-package game
+package match
 
 import (
 	"encoding/json"
@@ -44,7 +44,7 @@ func GetMatchInfo(matchID int64) (map[string]interface{}, error) {
 	}
 
 	return map[string]interface{}{
-		"type":    "gameInfo",
+		"type":    "matchInfo",
 		"matchId": matchID,
 		"players": players,
 		"moves":   match.Moves,
@@ -54,14 +54,14 @@ func GetMatchInfo(matchID int64) (map[string]interface{}, error) {
 }
 
 func broadcastMatchInfo(broadcastFunc func(int64, []byte), matchID int64) error {
-	gameInfo, err := GetMatchInfo(matchID)
+	matchInfo, err := GetMatchInfo(matchID)
 	if err != nil {
-		return fmt.Errorf("failed to get game info: %w", err)
+		return fmt.Errorf("failed to get match info: %w", err)
 	}
 
-	msgBytes, err := json.Marshal(gameInfo)
+	msgBytes, err := json.Marshal(matchInfo)
 	if err != nil {
-		return fmt.Errorf("failed to marshal game info: %w", err)
+		return fmt.Errorf("failed to marshal match info: %w", err)
 	}
 
 	broadcastFunc(matchID, msgBytes)

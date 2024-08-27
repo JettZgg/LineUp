@@ -99,16 +99,13 @@ func (h *Hub) BroadcastToMatch(matchID int64, message []byte) {
 }
 
 func (r *Room) run() {
-	for {
-		select {
-		case message := <-r.Send:
-			for client := range r.Clients {
-				select {
-				case client.send <- message:
-				default:
-					close(client.send)
-					delete(r.Clients, client)
-				}
+	for message := range r.Send {
+		for client := range r.Clients {
+			select {
+			case client.send <- message:
+			default:
+				close(client.send)
+				delete(r.Clients, client)
 			}
 		}
 	}

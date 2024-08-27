@@ -53,7 +53,7 @@ func LoginHandler(c *gin.Context) {
 func CreateMatchHandler(c *gin.Context) {
 	uid := c.GetInt64("uid")
 
-	match, err := game.CreateMatch(uid)
+	match, err := match.CreateMatch(uid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -94,7 +94,7 @@ func JoinMatchHandler(c *gin.Context) {
 		hub.BroadcastToMatch(matchID, message)
 	}
 
-	if err := game.JoinMatch(broadcastFunc, matchID, uid); err != nil {
+	if err := match.JoinMatch(broadcastFunc, matchID, uid); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -109,7 +109,7 @@ func GetMatchHandler(c *gin.Context) {
 		return
 	}
 
-	match, err := game.GetMatch(matchID)
+	match, err := match.GetMatch(matchID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Match not found"})
 		return
@@ -125,7 +125,7 @@ func GetMatchHistoryHandler(c *gin.Context) {
 	uid := c.GetInt64("uid") // Assuming the username is set in the context by the auth middleware
 	limit := 10              // Or get this from query parameter
 
-	matches, err := game.GetMatchHistory(uid, limit)
+	matches, err := match.GetMatchHistory(uid, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve match history"})
 		return
@@ -141,7 +141,7 @@ func GetMatchReplayHandler(c *gin.Context) {
 		return
 	}
 
-	replay, err := game.GetMatchReplay(matchID)
+	replay, err := match.GetMatchReplay(matchID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve match replay"})
 		return

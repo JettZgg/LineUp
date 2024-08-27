@@ -17,6 +17,3 @@ func ValidateJSONBody(next http.HandlerFunc, v interface{}) http.HandlerFunc {
 		next.ServeHTTP(w, r)
 	}
 }
-
-// Usage in routes:
-// r.HandleFunc("/api/create-match", middleware.AuthMiddleware(middleware.ValidateJSONBody(handlers.CreateMatch, &game.MatchConfig{})))

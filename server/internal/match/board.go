@@ -1,4 +1,4 @@
-package game
+package match
 
 import (
 	"encoding/json"
@@ -47,7 +47,7 @@ func GetMatch(matchID int64) (*Match, error) {
 		if err != nil {
 			return nil, fmt.Errorf("match not found: %w", err)
 		}
-		// Convert db.Match to game.Match
+		// Convert db.Match to matches.Match
 		match = &Match{
 			MID:               dbMatch.MID,
 			Player1ID:         dbMatch.Player1ID,

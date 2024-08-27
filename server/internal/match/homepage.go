@@ -1,4 +1,4 @@
-package game
+package match
 
 import (
 	"encoding/json"
@@ -96,12 +96,12 @@ func LeaveMatch(broadcastFunc func(int64, []byte), matchID int64, playerID int64
 		return fmt.Errorf("failed to update match in database: %w", err)
 	}
 
-	gameInfo, err := GetMatchInfo(matchID)
+	matchInfo, err := GetMatchInfo(matchID)
 	if err != nil {
-		return fmt.Errorf("failed to get game info: %w", err)
+		return fmt.Errorf("failed to get match info: %w", err)
 	}
 
-	msgBytes, _ := json.Marshal(gameInfo)
+	msgBytes, _ := json.Marshal(matchInfo)
 	broadcastFunc(matchID, msgBytes)
 
 	return nil

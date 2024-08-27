@@ -2,7 +2,7 @@ import React from 'react';
 import { Box } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
-const GameBoard = styled(Box)(({ theme }) => ({
+const Board = styled(Box)(({ theme }) => ({
     display: 'grid',
     gridTemplateColumns: 'repeat(15, 1fr)',
     gridTemplateRows: 'repeat(15, 1fr)',
@@ -13,7 +13,7 @@ const GameBoard = styled(Box)(({ theme }) => ({
     border: '2px solid #1E1E1E',
 }));
 
-const GameCell = styled(Box)(({ theme }) => ({
+const Cell = styled(Box)(({ theme }) => ({
     width: '100%',
     height: '100%',
     backgroundColor: '#BF9D9D',
@@ -24,14 +24,14 @@ const GameCell = styled(Box)(({ theme }) => ({
 
 const MatchBoard = ({ onCellClick }) => {
     return (
-        <GameBoard>
+        <Board>
             {Array.from({ length: 225 }).map((_, index) => (
-                <GameCell
+                <Cell
                     key={index}
                     onClick={() => onCellClick(index % 15, Math.floor(index / 15))}
                 />
             ))}
-        </GameBoard>
+        </Board>
     );
 };
 

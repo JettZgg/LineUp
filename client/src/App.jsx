@@ -8,10 +8,10 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
-import Home from './components/Home';
-import GameRoom from './components/Game/GameRoom';
+import Home from './pages/Home';
+import MatchRoom from './pages/MatchRoom';
 import ProtectedRoute from './components/common/ProtectedRoute';
-import ErrorBoundary from './components/ErrorBoundary';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 const theme = createTheme(themeConfig);
 
@@ -27,7 +27,7 @@ const App = () => {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-                <Route path="/match/:matchId" element={<ProtectedRoute><GameRoom /></ProtectedRoute>} />
+                <Route path="/match/:matchId" element={<ProtectedRoute><MatchRoom /></ProtectedRoute>} />
               </Routes>
             </Box>
           </Router>

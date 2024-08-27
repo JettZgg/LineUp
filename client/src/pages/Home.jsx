@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Typography, Box, Button } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { useAuth } from './common/AuthContext';
+import { useAuth } from '../components/common/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { createMatch } from '../services/api';
-import JoinMatchModal from './Game/JoinMatchModal';
-import PageLayout from './layout/PageLayout';
+import JoinMatchModal from '../components/Match/JoinMatchModal';
+import PageLayout from '../components/layout/PageLayout';
 
 const StyledButton = styled(Button)(({ theme }) => ({
     backgroundColor: '#DCC2C2',
